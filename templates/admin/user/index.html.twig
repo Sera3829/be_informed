@@ -1,0 +1,111 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Gestion des utilisateurs
+{% endblock %}
+
+{% block body %}
+	<div class="d-flex justify-content-between align-items-center mb-4">
+		<h2>
+			<i class="fas fa-users me-2"></i>Utilisateurs</h2>
+		<div class="d-flex gap-2">
+			<a href="{{ path('admin_public_user_index') }}" class="btn btn-success">
+				<i class="fas fa-user me-2"></i>Gérer les visiteurs
+			</a>
+			<a href="{{ path('admin_user_new') }}" class="btn btn-primary">
+				<i class="fas fa-plus me-2"></i>Nouvel utilisateur
+			</a>
+		</div>
+	</div>
+
+	<div class="card shadow-sm">
+		<div class="card-body p-0">
+			<table id="table-users" class="table table-hover mb-0">
+				<thead class="table-primary">
+					<tr>
+						<th>Nom</th>
+						<th>Prénom</th>
+						<th>Email</th>
+						<th>Rôle</th>
+						<th>Dernière connexion</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for user in users %}
+						<tr>
+							<td>{{ user.nom }}</td>
+							<td>{{ user.prenom }}</td>
+							<td>{{ user.email }}</td>
+							<td>
+								{% for role in user.roles %}
+									{% if role == 'ROLE_ADMIN' %}
+										<span class="badge bg-danger">Admin</span>
+									{% elseif role == 'ROLE_CONFERENCIER' %}
+										<span class="badge bg-success">Conférencier</span>
+									{% endif %}
+								{% endfor %}
+							</td>
+
+							<td>
+								{% if user.lastLoginAt %}
+									{{ user.lastLoginAt|date('d/m/Y H:i') }}
+								{% else %}
+									<span class="text-muted">Jamais</span>
+								{% endif %}
+							</td>
+
+							<td class="text-end">
+								<a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-warning">
+									<i class="fas fa-edit"></i>
+								</a>
+								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ user.prenom }} {{ user.nom }}')">
+									<i class="fas fa-trash"></i>
+								</button>
+								<form id="delete-{{ user.id }}" action="{{ path('admin_user_delete', {id: user.id}) }}" method="post" class="d-none">
+									<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+								</form>
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="6" class="text-center text-muted py-4">Aucun utilisateur.</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+	<script>
+		function confirmDelete(id, nom) {
+Swal.fire({
+title: 'Supprimer cet utilisateur ?',
+text: nom,
+icon: 'warning',
+showCancelButton: true,
+confirmButtonColor: '#e74c3c',
+cancelButtonColor: '#95a5a6',
+confirmButtonText: 'Oui, supprimer',
+cancelButtonText: 'Annuler'
+}).then((result) => {
+if (result.isConfirmed) {
+document.getElementById('delete-' + id).submit();
+}
+});
+}
+
+$('#table-users').DataTable({
+language: {
+url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+},
+columnDefs: [
+{
+orderable: false,
+targets: -1
+}
+]
+});
+	</script>
+{% endblock %}

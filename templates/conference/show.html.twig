@@ -1,0 +1,282 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+	{{ conference.titre }}
+{% endblock %}
+
+{% block stylesheets %}
+	<style>
+		.conference-hero {
+			position: relative;
+			height: 400px;
+			overflow: hidden;
+			border-radius: 16px;
+			margin-bottom: 2rem;
+		}
+		.conference-hero img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.conference-hero .hero-overlay {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background: linear-gradient(transparent, rgba(0,0,0,0.75));
+			padding: 2rem;
+			color: white;
+		}
+		.conference-hero .placeholder-hero {
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(135deg, #2c3e50, #3498db);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.meta-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			background: rgba(255, 255, 255, 0.15);
+			backdrop-filter: blur(4px);
+			border-radius: 20px;
+			padding: 4px 12px;
+			font-size: 0.85rem;
+			color: white;
+			margin-right: 8px;
+			margin-top: 6px;
+		}
+		.comment-card {
+			border: none;
+			border-radius: 10px;
+			background: #f8f9fa;
+			margin-bottom: 1rem;
+			padding: 1rem 1.25rem;
+			transition: box-shadow 0.2s;
+		}
+		.comment-card:hover {
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		}
+		.sticky-sidebar {
+			position: sticky;
+			top: 20px;
+		}
+		.info-card {
+			border: none;
+			border-radius: 12px;
+			overflow: hidden;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+		}
+		.info-card .info-item {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 0.75rem 1.25rem;
+			border-bottom: 1px solid #f0f0f0;
+		}
+		.info-card .info-item:last-child {
+			border-bottom: none;
+		}
+		.info-card .info-icon {
+			width: 36px;
+			height: 36px;
+			border-radius: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+		}
+	</style>
+{% endblock %}
+
+{% block body %}
+	<div class="container py-4">
+		<div
+			class="row g-4">
+
+			{# Colonne principale #}
+			<div
+				class="col-lg-8">
+
+				{# Hero image #}
+				<div class="conference-hero">
+					{% if conference.imageName %}
+						<img src="/images/conferences/{{ conference.imageName }}" alt="{{ conference.titre }}">
+					{% else %}
+						<div class="placeholder-hero">
+							<i class="fas fa-microphone-alt fa-5x text-white opacity-25"></i>
+						</div>
+					{% endif %}
+					<div class="hero-overlay">
+						<h1 class="h2 fw-bold mb-2">{{ conference.titre }}</h1>
+						<div class="flex-wrap d-flex">
+							<span class="meta-badge">
+								<i class="fas fa-calendar"></i>
+								{{ conference.date|date('d/m/Y') }}
+							</span>
+							<span class="meta-badge">
+								<i class="fas fa-clock"></i>
+								{{ conference.date|date('H:i') }}
+							</span>
+							<span class="meta-badge">
+								<i class="fas fa-map-marker-alt"></i>
+								{{ conference.lieu }}
+							</span>
+							<span class="meta-badge">
+								<i class="fas fa-user"></i>
+								{{ conference.owner.prenom }}
+								{{ conference.owner.nom }}
+							</span>
+						</div>
+					</div>
+				</div>
+
+				{# Description #}
+				<div class="card border-0 shadow-sm rounded-3 mb-4">
+					<div class="card-body p-4">
+						<h5 class="fw-bold mb-3">
+							<i class="fas fa-align-left me-2 text-primary"></i>À propos
+						</h5>
+						<p class="text-muted lh-lg">{{ conference.description }}</p>
+					</div>
+				</div>
+
+				{# Commentaires #}
+				<div class="mb-4">
+					<h5 class="fw-bold mb-3">
+						<i class="fas fa-comments me-2 text-primary"></i>
+						Commentaires
+						<span class="badge bg-primary rounded-pill ms-1">{{ conference.comments|length }}</span>
+					</h5>
+
+					{% for comment in conference.comments %}
+						<div class="comment-card">
+							<p class="mb-2">{{ comment.texte }}</p>
+							<div class="d-flex align-items-center gap-2">
+								<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width:28px;height:28px;flex-shrink:0;">
+									<i class="fas fa-{% if comment.isAnonymous %}user-secret{% else %}user{% endif %} text-white small"></i>
+								</div>
+								<small class="text-muted">
+									{% if comment.isAnonymous %}
+										Anonyme
+									{% else %}
+										{{ comment.publicUser.prenom }}
+										{{ comment.publicUser.nom }}
+									{% endif %}
+									&nbsp;·&nbsp;{{ comment.createdAt|date('d/m/Y H:i') }}
+								</small>
+							</div>
+						</div>
+					{% else %}
+						<div class="text-center py-4 text-muted">
+							<i class="fas fa-comment-slash fa-2x mb-2 d-block"></i>
+							Aucun commentaire pour le moment.
+						</div>
+					{% endfor %}
+				</div>
+
+				{# Formulaire commentaire #}
+				{% if is_granted('ROLE_USER') %}
+					<div class="card border-0 shadow-sm rounded-3">
+						<div class="card-header border-0 bg-primary text-white rounded-top-3">
+							<h5 class="mb-0">
+								<i class="fas fa-comment me-2"></i>Laisser un commentaire</h5>
+						</div>
+						<div class="card-body p-4">
+							{{ form_start(form) }}
+							<div class="mb-3">
+								{{ form_label(form.texte) }}
+								{{ form_widget(form.texte) }}
+								{{ form_errors(form.texte) }}
+							</div>
+							<div class="mb-3 form-check">
+								{{ form_widget(form.isAnonymous) }}
+								{{ form_label(form.isAnonymous) }}
+							</div>
+							<button type="submit" class="btn btn-primary rounded-pill px-4">
+								<i class="fas fa-paper-plane me-2"></i>Envoyer
+							</button>
+							{{ form_end(form) }}
+						</div>
+					</div>
+				{% else %}
+					<div class="alert alert-info border-0 rounded-3">
+						<i class="fas fa-info-circle me-2"></i>
+						<a href="{{ path('app_login_public') }}" class="fw-bold">Connectez-vous</a>
+						ou
+						<a href="{{ path('app_register_public') }}" class="fw-bold">inscrivez-vous</a>
+						pour laisser un commentaire.
+					</div>
+				{% endif %}
+			</div>
+
+			{# Sidebar #}
+			<div class="col-lg-4">
+				<div
+					class="sticky-sidebar">
+
+					{# Infos #}
+					<div class="info-card card mb-3">
+						<div class="card-header border-0 bg-white pt-4 pb-2 px-4">
+							<h6 class="fw-bold text-muted text-uppercase small mb-0">Informations</h6>
+						</div>
+						<div class="info-item">
+							<div class="info-icon bg-primary bg-opacity-10">
+								<i class="fas fa-calendar text-primary small"></i>
+							</div>
+							<div>
+								<div class="small text-muted">Date</div>
+								<div class="fw-semibold">{{ conference.date|date('d/m/Y') }}</div>
+							</div>
+						</div>
+						<div class="info-item">
+							<div class="info-icon bg-success bg-opacity-10">
+								<i class="fas fa-clock text-success small"></i>
+							</div>
+							<div>
+								<div class="small text-muted">Heure</div>
+								<div class="fw-semibold">{{ conference.date|date('H:i') }}</div>
+							</div>
+						</div>
+						<div class="info-item">
+							<div class="info-icon bg-danger bg-opacity-10">
+								<i class="fas fa-map-marker-alt text-danger small"></i>
+							</div>
+							<div>
+								<div class="small text-muted">Lieu</div>
+								<div class="fw-semibold">{{ conference.lieu }}</div>
+							</div>
+						</div>
+						<div class="info-item">
+							<div class="info-icon bg-warning bg-opacity-10">
+								<i class="fas fa-user text-warning small"></i>
+							</div>
+							<div>
+								<div class="small text-muted">Conférencier</div>
+								<div class="fw-semibold">{{ conference.owner.prenom }}
+									{{ conference.owner.nom }}</div>
+							</div>
+						</div>
+						<div class="info-item">
+							<div class="info-icon bg-info bg-opacity-10">
+								<i class="fas fa-comments text-info small"></i>
+							</div>
+							<div>
+								<div class="small text-muted">Commentaires</div>
+								<div class="fw-semibold">{{ conference.comments|length }}</div>
+							</div>
+						</div>
+					</div>
+
+					{# Retour #}
+					<a href="{{ path('app_conference_index') }}" class="btn btn-outline-secondary w-100 rounded-pill">
+						<i class="fas fa-arrow-left me-2"></i>Retour aux conférences
+					</a>
+				</div>
+			</div>
+
+		</div>
+	</div>
+{% endblock %}

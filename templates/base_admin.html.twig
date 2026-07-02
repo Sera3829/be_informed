@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>
+			{% block title %}Be Informed — Admin
+			{% endblock %}
+		</title>
+
+		<link rel="stylesheet" href="https://unpkg.com/@adminkit/core@latest/dist/css/app.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+		<style>
+			.dataTables_wrapper .dataTables_paginate .paginate_button {
+				display: inline-block;
+				padding: 4px 10px;
+				margin: 0 2px;
+				border: 1px solid #dee2e6;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+				background: #3b7ddd;
+				color: white !important;
+				border-color: #3b7ddd;
+			}
+			.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+				background: #e9ecef;
+				color: #333 !important;
+			}
+		</style>
+		{% block stylesheets %}{% endblock %}
+	</head>
+	<body>
+		<div
+			class="wrapper">
+
+			{# Sidebar #}
+			<nav id="sidebar" class="sidebar js-sidebar">
+				<div class="sidebar-content js-simplebar">
+					<a class="sidebar-brand" href="{{ path('admin_dashboard') }}">
+						<span class="align-middle">
+							<i class="fas fa-microphone-alt me-2"></i>Be Informed
+						</span>
+					</a>
+
+					<ul class="sidebar-nav">
+						<li class="sidebar-header">Navigation</li>
+
+						<li class="sidebar-item {% if app.request.attributes.get('_route') == 'admin_dashboard' %}active{% endif %}">
+							<a class="sidebar-link" href="{{ path('admin_dashboard') }}">
+								<i class="fas fa-tachometer-alt align-middle me-2"></i>
+								<span class="align-middle">Dashboard</span>
+							</a>
+						</li>
+
+						<li class="sidebar-item {% if 'admin_conference' in app.request.attributes.get('_route') %}active{% endif %}">
+							<a class="sidebar-link" href="{{ path('admin_conference_index') }}">
+								<i class="fas fa-microphone-alt align-middle me-2"></i>
+								<span class="align-middle">Conférences</span>
+							</a>
+						</li>
+
+						<li class="sidebar-header">Utilisateurs</li>
+
+						<li class="sidebar-item {% if 'admin_user' in app.request.attributes.get('_route') %}active{% endif %}">
+							<a class="sidebar-link" href="{{ path('admin_user_index') }}">
+								<i class="fas fa-users align-middle me-2"></i>
+								<span class="align-middle">Admins & Conférenciers</span>
+							</a>
+						</li>
+
+						<li class="sidebar-item {% if 'admin_public_user' in app.request.attributes.get('_route') %}active{% endif %}">
+							<a class="sidebar-link" href="{{ path('admin_public_user_index') }}">
+								<i class="fas fa-user align-middle me-2"></i>
+								<span class="align-middle">Visiteurs</span>
+							</a>
+						</li>
+
+						<li class="sidebar-header">Contenu</li>
+
+						<li class="sidebar-item {% if 'admin_comment' in app.request.attributes.get('_route') %}active{% endif %}">
+							<a class="sidebar-link" href="{{ path('admin_comment_index') }}">
+								<i class="fas fa-comments align-middle me-2"></i>
+								<span class="align-middle">Commentaires</span>
+							</a>
+						</li>
+
+						<li class="sidebar-header">Site</li>
+
+						<li class="sidebar-item">
+							<a class="sidebar-link" href="{{ path('app_home') }}">
+								<i class="fas fa-globe align-middle me-2"></i>
+								<span class="align-middle">Acceuil</span>
+							</a>
+						</li>
+					</ul>
+				</div>
+			</nav>
+
+			{# Main content #}
+			<div class="main">
+				<nav class="navbar navbar-expand navbar-light navbar-bg">
+					<a class="sidebar-toggle js-sidebar-toggle">
+						<i class="hamburger align-self-center"></i>
+					</a>
+					<div class="navbar-collapse collapse">
+						<ul class="navbar-nav navbar-align">
+							<li class="nav-item dropdown">
+								<a class="nav-icon dropdown-toggle" href="#" data-bs-toggle="dropdown">
+									<div class="d-inline-block">
+										<i class="fas fa-user-circle fa-lg text-muted"></i>
+									</div>
+								</a>
+								<div class="dropdown-menu dropdown-menu-end">
+									<div class="dropdown-menu-header">
+										<div class="text-muted">
+											{{ app.user.prenom }}
+											{{ app.user.nom }}
+										</div>
+									</div>
+									<div class="dropdown-divider"></div>
+									<a class="dropdown-item text-danger" href="{{ path('app_logout') }}">
+										<i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+									</a>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</nav>
+
+				<main class="content">
+					<div class="container-fluid p-0">
+						{% for type, messages in app.flashes %}
+							{% for message in messages %}
+								<div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
+									{{ message }}
+									<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+								</div>
+							{% endfor %}
+						{% endfor %}
+
+						{% block body %}{% endblock %}
+					</div>
+				</main>
+
+				<footer class="footer">
+					<div class="container-fluid">
+						<div class="row text-muted">
+							<div class="col-6 text-start">
+								<p class="mb-0">
+									<strong>Be Informed</strong>
+									&copy;
+									{{ "now"|date("Y") }}
+								</p>
+							</div>
+						</div>
+					</div>
+				</footer>
+			</div>
+		</div>
+
+		<script src="https://unpkg.com/@adminkit/core@latest/dist/js/app.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+		{% block javascripts %}{% endblock %}
+	</body>
+</html>

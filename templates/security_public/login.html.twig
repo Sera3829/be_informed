@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion visiteur
+{% endblock %}
+
+{% block body %}
+	<div class="row justify-content-center">
+		<div class="col-md-5">
+			<div class="card shadow-sm mt-5">
+				<div class="card-header bg-primary text-white text-center">
+					<h4 class="mb-0">
+						<i class="fas fa-mobile-alt me-2"></i>Connexion visiteur</h4>
+				</div>
+				<div class="card-body p-4">
+					{% if error %}
+						<div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+					{% endif %}
+
+					<form method="post">
+						<div class="mb-3">
+							<label for="phone" class="form-label">Téléphone</label>
+							<input type="text" id="phone" name="_username" class="form-control" value="{{ last_username }}" required autofocus>
+						</div>
+						<div class="mb-3">
+							<label for="password" class="form-label">Mot de passe</label>
+							<input type="password" id="password" name="_password" class="form-control" required>
+						</div>
+						<div class="d-grid">
+							<button type="submit" class="btn btn-primary">
+								<i class="fas fa-sign-in-alt me-2"></i>Se connecter
+							</button>
+						</div>
+					</form>
+
+					<hr>
+					<div class="text-center">
+						<a href="{{ path('app_register_public') }}" class="text-decoration-none">
+							<i class="fas fa-user-plus me-1"></i>Pas encore inscrit ? S'inscrire
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

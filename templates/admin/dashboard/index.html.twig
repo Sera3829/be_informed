@@ -1,0 +1,237 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Dashboard Admin
+{% endblock %}
+
+{% block stylesheets %}
+	<style>
+		.stat-card {
+			position: relative;
+			transition: transform 0.2s;
+			cursor: pointer;
+			text-decoration: none;
+			color: inherit;
+		}
+		.stat-card:hover {
+			transform: translateY(-4px);
+			color: inherit;
+		}
+		.notif-badge {
+			position: absolute;
+			top: -10px;
+			right: -10px;
+			width: 36px;
+			height: 36px;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 0.85rem;
+			font-weight: bold;
+			border: 2px solid white;
+			z-index: 1;
+		}
+	</style>
+{% endblock %}
+
+{% block body %}
+	<h2 class="mb-5">
+		<i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h2>
+
+	{# Compteurs #}
+	<div class="row g-4 mb-5">
+		<div class="col-md-3">
+			<div class="position-relative">
+				<span class="notif-badge bg-primary text-white">{{ stats.conferences }}</span>
+				<a href="{{ path('admin_conference_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
+					<div class="card-body py-4">
+						<i class="fas fa-microphone-alt fa-3x text-primary mb-3"></i>
+						<h5>Conférences</h5>
+					</div>
+				</a>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<div class="position-relative">
+				<span class="notif-badge bg-success text-white">{{ stats.users }}</span>
+				<a href="{{ path('admin_user_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
+					<div class="card-body py-4">
+						<i class="fas fa-users fa-3x text-success mb-3"></i>
+						<h5>Utilisateurs</h5>
+					</div>
+				</a>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<div class="position-relative">
+				<span class="notif-badge bg-info text-white">{{ stats.visiteurs }}</span>
+				<a href="{{ path('admin_public_user_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
+					<div class="card-body py-4">
+						<i class="fas fa-user fa-3x text-info mb-3"></i>
+						<h5>Visiteurs</h5>
+					</div>
+				</a>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<div class="position-relative">
+				<span class="notif-badge bg-warning text-dark">{{ stats.commentaires }}</span>
+				<a href="{{ path('admin_comment_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
+					<div class="card-body py-4">
+						<i class="fas fa-comments fa-3x text-warning mb-3"></i>
+						<h5>Commentaires</h5>
+					</div>
+				</a>
+			</div>
+		</div>
+	</div>
+
+	{# Graphiques #}
+	<div class="row g-4">
+		<div class="col-md-8">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white">
+					<h5 class="mb-0">
+						<i class="fas fa-chart-line me-2"></i>Activité mensuelle</h5>
+				</div>
+				<div class="card-body">
+					<canvas id="activityChart" height="100"></canvas>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white">
+					<h5 class="mb-0">
+						<i class="fas fa-chart-pie me-2"></i>Répartition</h5>
+				</div>
+				<div class="card-body">
+					<canvas id="repartitionChart"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		// Données depuis Symfony
+const conferencesData = {{ charts.conferences|json_encode|raw }};
+const commentairesData = {{ charts.commentaires|json_encode|raw }};
+const visiteursData = {{ charts.visiteurs|json_encode|raw }};
+
+// Générer les 6 derniers mois comme labels
+function getLast6Months() {
+const months = [
+'Jan',
+'Fév',
+'Mar',
+'Avr',
+'Mai',
+'Jun',
+'Jul',
+'Aoû',
+'Sep',
+'Oct',
+'Nov',
+'Déc'
+];
+const result = [];
+const now = new Date();
+for (let i = 5; i >= 0; i--) {
+const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+result.push({
+label: months[d.getMonth()] + ' ' + d.getFullYear(),
+annee: d.getFullYear(),
+mois: d.getMonth() + 1
+});
+}
+return result;
+}
+
+function getValues(data, months) {
+return months.map(m => {
+const found = data.find(d => parseInt(d.annee) === m.annee && parseInt(d.mois) === m.mois);
+return found ? parseInt(found.total) : 0;
+});
+}
+
+const last6 = getLast6Months();
+const labels = last6.map(m => m.label);
+
+// Graphique courbes
+new Chart(document.getElementById('activityChart'), {
+type: 'line',
+data: {
+labels: labels,
+datasets: [
+{
+label: 'Conférences',
+data: getValues(conferencesData, last6),
+borderColor: '#2c3e50',
+backgroundColor: 'rgba(44,62,80,0.1)',
+tension: 0.4,
+fill: true
+}, {
+label: 'Commentaires',
+data: getValues(commentairesData, last6),
+borderColor: '#f39c12',
+backgroundColor: 'rgba(243,156,18,0.1)',
+tension: 0.4,
+fill: true
+}, {
+label: 'Nouveaux visiteurs',
+data: getValues(visiteursData, last6),
+borderColor: '#18bc9c',
+backgroundColor: 'rgba(24,188,156,0.1)',
+tension: 0.4,
+fill: true
+}
+]
+},
+options: {
+responsive: true,
+plugins: {
+legend: {
+position: 'top'
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+ticks: {
+stepSize: 1
+}
+}
+}
+}
+});
+
+// Graphique camembert
+new Chart(document.getElementById('repartitionChart'), {
+type: 'doughnut',
+data: {
+labels: [
+'Conférences', 'Commentaires', 'Visiteurs'
+],
+datasets: [
+{
+data: [
+{{ stats.conferences }}, {{ stats.commentaires }}, {{ stats.visiteurs }}
+],
+backgroundColor: ['#2c3e50', '#f39c12', '#18bc9c']
+}
+]
+},
+options: {
+responsive: true,
+plugins: {
+legend: {
+position: 'bottom'
+}
+}
+}
+});
+	</script>
+{% endblock %}

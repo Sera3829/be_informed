@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conférences
+{% endblock %}
+
+{% block stylesheets %}
+	<style>
+		.conference-card {
+			border: none;
+			border-radius: 12px;
+			overflow: hidden;
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
+		.conference-card:hover {
+			transform: translateY(-6px);
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+		}
+		.conference-card .card-img-top {
+			height: 220px;
+			object-fit: cover;
+		}
+		.conference-card .placeholder-img {
+			height: 220px;
+			background: linear-gradient(135deg, #2c3e50, #3498db);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.conference-card .card-body {
+			padding: 1.25rem;
+		}
+		.conference-card .card-footer {
+			background: transparent;
+			border-top: 1px solid rgba(0, 0, 0, 0.06);
+			padding: 0.75rem 1.25rem;
+		}
+		.badge-date {
+			position: absolute;
+			top: 12px;
+			right: 12px;
+			background: rgba(0, 0, 0, 0.65);
+			color: white;
+			padding: 4px 10px;
+			border-radius: 20px;
+			font-size: 0.75rem;
+			backdrop-filter: blur(4px);
+		}
+		.hero-section {
+			background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+			color: white;
+			padding: 4rem 0;
+			margin-bottom: 3rem;
+		}
+		.search-bar {
+			max-width: 500px;
+			margin: 1.5rem auto 0;
+		}
+	</style>
+{% endblock %}
+
+{% block body %}
+
+	{# Hero #}
+	<div class="hero-section">
+		<div class="container text-center">
+			<h1 class="display-5 fw-bold mb-2">
+				<i class="fas fa-microphone-alt me-3"></i>Conférences
+			</h1>
+			<p class="lead opacity-75">Découvrez et participez aux prochaines conférences</p>
+			<div class="search-bar">
+				<input type="text" id="search-input" class="form-control form-control-lg rounded-pill" placeholder="Rechercher une conférence...">
+			</div>
+		</div>
+	</div>
+
+	<div
+		class="container">
+
+		{# Compteur #}
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<p class="text-muted mb-0">
+				<span id="count">{{ conferences|length }}</span>
+				conférence(s) disponible(s)
+			</p>
+		</div>
+
+		{# Grille #}
+		<div class="row g-4" id="conferences-grid">
+			{% for conference in conferences %}
+				<div class="col-12 col-sm-6 col-lg-4 conference-item">
+					<div class="card conference-card shadow-sm h-100">
+						<div class="position-relative">
+							{% if conference.imageName %}
+								<img src="/images/conferences/{{ conference.imageName }}" class="card-img-top" alt="{{ conference.titre }}">
+							{% else %}
+								<div class="placeholder-img">
+									<i class="fas fa-microphone-alt fa-3x text-white opacity-50"></i>
+								</div>
+							{% endif %}
+							<span class="badge-date">
+								<i class="fas fa-calendar me-1"></i>
+								{{ conference.date|date('d/m/Y') }}
+							</span>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title fw-bold mb-2">{{ conference.titre }}</h5>
+							<p class="text-muted small mb-1">
+								<i class="fas fa-map-marker-alt me-1 text-danger"></i>
+								{{ conference.lieu }}
+							</p>
+							<p class="text-muted small mb-3">
+								<i class="fas fa-clock me-1 text-primary"></i>
+								{{ conference.date|date('H:i') }}
+								&nbsp;·&nbsp;
+								<i class="fas fa-user me-1 text-success"></i>
+								{{ conference.owner.prenom }}
+								{{ conference.owner.nom }}
+							</p>
+							<p class="card-text text-muted small">
+								{{ conference.description|slice(0, 120) }}
+								{% if conference.description|length > 120 %}...
+								{% endif %}
+							</p>
+						</div>
+
+						<div class="card-footer d-flex justify-content-between align-items-center">
+							<span class="small text-muted">
+								<i class="fas fa-comments me-1"></i>
+								{{ conference.comments|length }}
+								commentaire(s)
+							</span>
+							<a href="{{ path('app_conference_show', {id: conference.id}) }}" class="btn btn-primary btn-sm rounded-pill px-3">
+								Voir détails
+								<i class="fas fa-arrow-right ms-1"></i>
+							</a>
+						</div>
+					</div>
+				</div>
+			{% else %}
+				<div class="col-12 text-center py-5">
+					<i class="fas fa-microphone-alt fa-4x text-muted mb-3 d-block"></i>
+					<h5 class="text-muted">Aucune conférence pour le moment</h5>
+					<p class="text-muted small">Revenez bientôt !</p>
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+	<script>
+		// Recherche en temps réel
+document.getElementById('search-input').addEventListener('input', function () {
+const query = this.value.toLowerCase();
+const items = document.querySelectorAll('.conference-item');
+let visible = 0;
+
+items.forEach(item => {
+const text = item.innerText.toLowerCase();
+if (text.includes(query)) {
+item.style.display = '';
+visible++;
+} else {
+item.style.display = 'none';
+}
+});
+
+document.getElementById('count').textContent = visible;
+});
+	</script>
+{% endblock %}

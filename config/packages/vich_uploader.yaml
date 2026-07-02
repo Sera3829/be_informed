@@ -1,0 +1,7 @@
+vich_uploader:
+    db_driver: orm
+    mappings:
+        conferences:
+            uri_prefix: /images/conferences
+            upload_destination: '%kernel.project_dir%/public/images/conferences'
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer

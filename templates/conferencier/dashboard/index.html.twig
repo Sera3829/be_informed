@@ -1,0 +1,23 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Espace conférencier
+{% endblock %}
+
+{% block body %}
+	<h2 class="mb-4">
+		<i class="fas fa-chalkboard-teacher me-2"></i>Mon espace</h2>
+
+	<div class="row g-4">
+		<div class="col-md-4">
+			<div class="card shadow-sm text-center h-100">
+				<div class="card-body py-4">
+					<i class="fas fa-microphone-alt fa-3x text-primary mb-3"></i>
+					<h5>Mes conférences</h5>
+					<a href="{{ path('conferencier_conference_index') }}" class="btn btn-primary mt-2">
+						Gérer mes conférences
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
