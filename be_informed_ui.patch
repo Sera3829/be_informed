@@ -1,0 +1,1169 @@
+diff --git a/config/packages/twig.yaml b/config/packages/twig.yaml
+index 3f795d9..11514b5 100644
+--- a/config/packages/twig.yaml
++++ b/config/packages/twig.yaml
+@@ -1,5 +1,7 @@
+ twig:
+     file_name_pattern: '*.twig'
++    form_themes:
++        - 'bootstrap_5_layout.html.twig'
+ 
+ when@test:
+     twig:
+diff --git a/src/Controller/Admin/ConferenceController.php b/src/Controller/Admin/ConferenceController.php
+index 3ac84f7..bb356e5 100644
+--- a/src/Controller/Admin/ConferenceController.php
++++ b/src/Controller/Admin/ConferenceController.php
+@@ -7,6 +7,7 @@ use App\Form\ConferenceFormType;
+ use App\Repository\ConferenceRepository;
+ use Doctrine\ORM\EntityManagerInterface;
+ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
++use Symfony\Component\HttpFoundation\JsonResponse;
+ use Symfony\Component\HttpFoundation\Request;
+ use Symfony\Component\HttpFoundation\Response;
+ use Symfony\Component\Routing\Attribute\Route;
+@@ -38,14 +39,14 @@ class ConferenceController extends AbstractController
+             $em->persist($conference);
+             $em->flush();
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Conférence créée avec succès.']);
++            }
+             $this->addFlash('success', 'Conférence créée avec succès.');
+             return $this->redirectToRoute('admin_conference_index');
+         }
+ 
+-        return $this->render('admin/conference/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Nouvelle conférence',
+-        ]);
++        return $this->renderForm($request, $form, 'Nouvelle conférence', 'fa-microphone-alt', $this->generateUrl('admin_conference_new'));
+     }
+ 
+     #[Route('/{id}/edit', name: 'edit')]
+@@ -59,15 +60,14 @@ class ConferenceController extends AbstractController
+         if ($form->isSubmitted() && $form->isValid()) {
+             $em->flush();
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Conférence modifiée avec succès.']);
++            }
+             $this->addFlash('success', 'Conférence modifiée avec succès.');
+             return $this->redirectToRoute('admin_conference_index');
+         }
+ 
+-        return $this->render('admin/conference/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Modifier la conférence',
+-            'conference' => $conference,
+-        ]);
++        return $this->renderForm($request, $form, 'Modifier la conférence', 'fa-microphone-alt', $this->generateUrl('admin_conference_edit', ['id' => $conference->getId()]), ['conference' => $conference]);
+     }
+ 
+     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
+@@ -83,4 +83,24 @@ class ConferenceController extends AbstractController
+ 
+         return $this->redirectToRoute('admin_conference_index');
+     }
++
++    private function renderForm(Request $request, $form, string $titre, string $icon, string $action, array $extra = []): Response
++    {
++        $params = array_merge($extra, [
++            'form' => $form,
++            'titre' => $titre,
++            'icon' => $icon,
++            'form_action' => $action,
++        ]);
++
++        if ($request->isXmlHttpRequest()) {
++            $response = $this->render('partials/_ajax_form.html.twig', $params);
++            if ($form->isSubmitted()) {
++                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
++            }
++            return $response;
++        }
++
++        return $this->render('admin/conference/form.html.twig', $params);
++    }
+ }
+diff --git a/src/Controller/Admin/PublicUserController.php b/src/Controller/Admin/PublicUserController.php
+index 4f8aaa0..fb2ecdb 100644
+--- a/src/Controller/Admin/PublicUserController.php
++++ b/src/Controller/Admin/PublicUserController.php
+@@ -4,13 +4,13 @@ namespace App\Controller\Admin;
+ 
+ use App\Entity\PublicUser;
+ use App\Repository\PublicUserRepository;
++use App\Service\UserManager;
+ use Doctrine\ORM\EntityManagerInterface;
+ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
++use Symfony\Component\HttpFoundation\JsonResponse;
+ use Symfony\Component\HttpFoundation\Request;
+ use Symfony\Component\HttpFoundation\Response;
+-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+ use Symfony\Component\Routing\Attribute\Route;
+-use App\Service\UserManager;
+ 
+ #[Route('/admin/visiteurs', name: 'admin_public_user_')]
+ class PublicUserController extends AbstractController
+@@ -26,12 +26,8 @@ class PublicUserController extends AbstractController
+     }
+ 
+     #[Route('/{id}/edit', name: 'edit')]
+-    public function edit(
+-        PublicUser $public_user,
+-        Request $request,
+-        EntityManagerInterface $em,
+-        UserManager $userManager
+-    ): Response {
++    public function edit(PublicUser $public_user, Request $request, EntityManagerInterface $em, UserManager $userManager): Response
++    {
+         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+ 
+         $form = $this->createForm(\App\Form\PublicUserFormType::class, $public_user, [
+@@ -47,15 +43,30 @@ class PublicUserController extends AbstractController
+                 $em->flush();
+             }
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Visiteur modifié avec succès.']);
++            }
+             $this->addFlash('success', 'Visiteur modifié avec succès.');
+             return $this->redirectToRoute('admin_public_user_index');
+         }
+ 
+-        return $this->render('admin/public_user/form.html.twig', [
++        $params = [
+             'form' => $form,
+             'titre' => 'Modifier le visiteur',
++            'icon' => 'fa-user-edit',
++            'form_action' => $this->generateUrl('admin_public_user_edit', ['id' => $public_user->getId()]),
+             'user' => $public_user,
+-        ]);
++        ];
++
++        if ($request->isXmlHttpRequest()) {
++            $response = $this->render('partials/_ajax_form.html.twig', $params);
++            if ($form->isSubmitted()) {
++                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
++            }
++            return $response;
++        }
++
++        return $this->render('admin/public_user/form.html.twig', $params);
+     }
+ 
+     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
+diff --git a/src/Controller/Admin/UserController.php b/src/Controller/Admin/UserController.php
+index c769710..a00b898 100644
+--- a/src/Controller/Admin/UserController.php
++++ b/src/Controller/Admin/UserController.php
+@@ -4,13 +4,13 @@ namespace App\Controller\Admin;
+ 
+ use App\Entity\User;
+ use App\Repository\UserRepository;
++use App\Service\UserManager;
+ use Doctrine\ORM\EntityManagerInterface;
+ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
++use Symfony\Component\HttpFoundation\JsonResponse;
+ use Symfony\Component\HttpFoundation\Request;
+ use Symfony\Component\HttpFoundation\Response;
+-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+ use Symfony\Component\Routing\Attribute\Route;
+-use App\Service\UserManager;
+ 
+ #[Route('/admin/users', name: 'admin_user_')]
+ class UserController extends AbstractController
+@@ -26,10 +26,8 @@ class UserController extends AbstractController
+     }
+ 
+     #[Route('/new', name: 'new')]
+-    public function new(
+-        Request $request,
+-        UserManager $userManager
+-    ): Response {
++    public function new(Request $request, UserManager $userManager): Response
++    {
+         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+ 
+         $user = new User();
+@@ -39,23 +37,19 @@ class UserController extends AbstractController
+         if ($form->isSubmitted() && $form->isValid()) {
+             $userManager->createUser($user, $form->get('plainPassword')->getData(), $form->get('roles')->getData());
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Utilisateur créé avec succès.']);
++            }
+             $this->addFlash('success', 'Utilisateur créé avec succès.');
+             return $this->redirectToRoute('admin_user_index');
+         }
+ 
+-        return $this->render('admin/user/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Nouvel utilisateur',
+-        ]);
++        return $this->renderUserForm($request, $form, 'Nouvel utilisateur', 'fa-user-plus', $this->generateUrl('admin_user_new'));
+     }
+ 
+     #[Route('/{id}/edit', name: 'edit')]
+-    public function edit(
+-        User $user,
+-        Request $request,
+-        EntityManagerInterface $em,
+-        UserManager $userManager
+-    ): Response {
++    public function edit(User $user, Request $request, EntityManagerInterface $em, UserManager $userManager): Response
++    {
+         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+ 
+         $form = $this->createForm(\App\Form\AdminUserFormType::class, $user, [
+@@ -71,15 +65,14 @@ class UserController extends AbstractController
+                 $em->flush();
+             }
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Utilisateur modifié avec succès.']);
++            }
+             $this->addFlash('success', 'Utilisateur modifié avec succès.');
+             return $this->redirectToRoute('admin_user_index');
+         }
+ 
+-        return $this->render('admin/user/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Modifier l\'utilisateur',
+-            'user' => $user,
+-        ]);
++        return $this->renderUserForm($request, $form, "Modifier l'utilisateur", 'fa-user-edit', $this->generateUrl('admin_user_edit', ['id' => $user->getId()]), ['user' => $user]);
+     }
+ 
+     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
+@@ -95,4 +88,24 @@ class UserController extends AbstractController
+ 
+         return $this->redirectToRoute('admin_user_index');
+     }
++
++    private function renderUserForm(Request $request, $form, string $titre, string $icon, string $action, array $extra = []): Response
++    {
++        $params = array_merge($extra, [
++            'form' => $form,
++            'titre' => $titre,
++            'icon' => $icon,
++            'form_action' => $action,
++        ]);
++
++        if ($request->isXmlHttpRequest()) {
++            $response = $this->render('partials/_ajax_form.html.twig', $params);
++            if ($form->isSubmitted()) {
++                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
++            }
++            return $response;
++        }
++
++        return $this->render('admin/user/form.html.twig', $params);
++    }
+ }
+diff --git a/src/Controller/Conferencier/ConferenceController.php b/src/Controller/Conferencier/ConferenceController.php
+index 7d1cf5d..2827294 100644
+--- a/src/Controller/Conferencier/ConferenceController.php
++++ b/src/Controller/Conferencier/ConferenceController.php
+@@ -7,6 +7,7 @@ use App\Form\ConferenceFormType;
+ use App\Repository\ConferenceRepository;
+ use Doctrine\ORM\EntityManagerInterface;
+ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
++use Symfony\Component\HttpFoundation\JsonResponse;
+ use Symfony\Component\HttpFoundation\Request;
+ use Symfony\Component\HttpFoundation\Response;
+ use Symfony\Component\Routing\Attribute\Route;
+@@ -42,14 +43,14 @@ class ConferenceController extends AbstractController
+             $em->persist($conference);
+             $em->flush();
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Conférence créée avec succès.']);
++            }
+             $this->addFlash('success', 'Conférence créée avec succès.');
+             return $this->redirectToRoute('conferencier_conference_index');
+         }
+ 
+-        return $this->render('conferencier/conference/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Nouvelle conférence',
+-        ]);
++        return $this->renderForm($request, $form, 'Nouvelle conférence', 'fa-microphone-alt', $this->generateUrl('conferencier_conference_new'));
+     }
+ 
+     #[Route('/{id}/edit', name: 'edit')]
+@@ -65,15 +66,14 @@ class ConferenceController extends AbstractController
+         if ($form->isSubmitted() && $form->isValid()) {
+             $em->flush();
+ 
++            if ($request->isXmlHttpRequest()) {
++                return new JsonResponse(['success' => true, 'message' => 'Conférence modifiée avec succès.']);
++            }
+             $this->addFlash('success', 'Conférence modifiée avec succès.');
+             return $this->redirectToRoute('conferencier_conference_index');
+         }
+ 
+-        return $this->render('conferencier/conference/form.html.twig', [
+-            'form' => $form,
+-            'titre' => 'Modifier la conférence',
+-            'conference' => $conference,
+-        ]);
++        return $this->renderForm($request, $form, 'Modifier la conférence', 'fa-microphone-alt', $this->generateUrl('conferencier_conference_edit', ['id' => $conference->getId()]), ['conference' => $conference]);
+     }
+ 
+     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
+@@ -89,4 +89,24 @@ class ConferenceController extends AbstractController
+ 
+         return $this->redirectToRoute('conferencier_conference_index');
+     }
++
++    private function renderForm(Request $request, $form, string $titre, string $icon, string $action, array $extra = []): Response
++    {
++        $params = array_merge($extra, [
++            'form' => $form,
++            'titre' => $titre,
++            'icon' => $icon,
++            'form_action' => $action,
++        ]);
++
++        if ($request->isXmlHttpRequest()) {
++            $response = $this->render('partials/_ajax_form.html.twig', $params);
++            if ($form->isSubmitted()) {
++                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
++            }
++            return $response;
++        }
++
++        return $this->render('conferencier/conference/form.html.twig', $params);
++    }
+ }
+diff --git a/src/Form/AdminUserFormType.php b/src/Form/AdminUserFormType.php
+index ede5d71..fb75061 100644
+--- a/src/Form/AdminUserFormType.php
++++ b/src/Form/AdminUserFormType.php
+@@ -20,15 +20,12 @@ class AdminUserFormType extends AbstractType
+         $builder
+             ->add('nom', TextType::class, [
+                 'label' => 'Nom',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('prenom', TextType::class, [
+                 'label' => 'Prénom',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('email', EmailType::class, [
+                 'label' => 'Email',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('roles', ChoiceType::class, [
+                 'label' => 'Rôle',
+@@ -44,7 +41,7 @@ class AdminUserFormType extends AbstractType
+                 'label' => 'Mot de passe',
+                 'mapped' => false,
+                 'required' => $options['require_password'],
+-                'attr' => ['class' => 'form-control'],
++                'help' => $options['require_password'] ? null : 'Laisser vide pour conserver le mot de passe actuel.',
+                 'constraints' => $options['require_password'] ? [
+                     new NotBlank(['message' => 'Veuillez entrer un mot de passe']),
+                     new Length(['min' => 6, 'minMessage' => 'Minimum {{ limit }} caractères']),
+diff --git a/src/Form/ConferenceFormType.php b/src/Form/ConferenceFormType.php
+index 3e4ff3f..35d63b2 100644
+--- a/src/Form/ConferenceFormType.php
++++ b/src/Form/ConferenceFormType.php
+@@ -17,30 +17,30 @@ class ConferenceFormType extends AbstractType
+ {
+     public function buildForm(FormBuilderInterface $builder, array $options): void
+     {
++        // Les classes CSS (form-control / form-select / form-check-input) sont
++        // appliquées automatiquement par le thème bootstrap_5_layout.html.twig.
+         $builder
+             ->add('titre', TextType::class, [
+                 'label' => 'Titre',
+-                'attr' => ['class' => 'form-control'],
++                'attr' => ['placeholder' => 'Titre de la conférence'],
+             ])
+             ->add('description', TextareaType::class, [
+                 'label' => 'Description',
+-                'attr' => ['class' => 'form-control', 'rows' => 4],
++                'attr' => ['rows' => 4, 'placeholder' => 'Décrivez la conférence…'],
+             ])
+             ->add('date', DateTimeType::class, [
+                 'label' => 'Date et heure',
+                 'widget' => 'single_text',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('lieu', TextType::class, [
+                 'label' => 'Lieu',
+-                'attr' => ['class' => 'form-control'],
++                'attr' => ['placeholder' => 'Ex. Ouagadougou, Salle A'],
+             ])
+             ->add('imageFile', VichImageType::class, [
+                 'label' => 'Image',
+                 'required' => false,
+                 'allow_delete' => true,
+                 'download_uri' => false,
+-                'attr' => ['class' => 'form-control'],
+                 'image_uri' => true,
+             ]);
+ 
+@@ -49,7 +49,7 @@ class ConferenceFormType extends AbstractType
+                 'class' => User::class,
+                 'choice_label' => fn(User $u) => $u->getPrenom() . ' ' . $u->getNom(),
+                 'label' => 'Conférencier',
+-                'attr' => ['class' => 'form-select'],
++                'placeholder' => '— Choisir un conférencier —',
+             ]);
+         }
+     }
+diff --git a/src/Form/PublicUserFormType.php b/src/Form/PublicUserFormType.php
+index 64c807e..b709d45 100644
+--- a/src/Form/PublicUserFormType.php
++++ b/src/Form/PublicUserFormType.php
+@@ -17,21 +17,19 @@ class PublicUserFormType extends AbstractType
+         $builder
+             ->add('nom', TextType::class, [
+                 'label' => 'Nom',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('prenom', TextType::class, [
+                 'label' => 'Prénom',
+-                'attr' => ['class' => 'form-control'],
+             ])
+             ->add('phone', TextType::class, [
+                 'label' => 'Téléphone',
+-                'attr' => ['class' => 'form-control'],
++                'attr' => ['placeholder' => 'Ex. +226 70 00 00 00'],
+             ])
+             ->add('plainPassword', PasswordType::class, [
+                 'label' => 'Mot de passe',
+                 'mapped' => false,
+                 'required' => $options['require_password'],
+-                'attr' => ['class' => 'form-control'],
++                'help' => $options['require_password'] ? null : 'Laisser vide pour conserver le mot de passe actuel.',
+                 'constraints' => $options['require_password'] ? [
+                     new Length(['min' => 6, 'minMessage' => 'Minimum {{ limit }} caractères']),
+                 ] : [],
+diff --git a/templates/admin/conference/form.html.twig b/templates/admin/conference/form.html.twig
+index bea5e8c..067e181 100644
+--- a/templates/admin/conference/form.html.twig
++++ b/templates/admin/conference/form.html.twig
+@@ -14,45 +14,16 @@
+ 						{{ titre }}</h4>
+ 				</div>
+ 				<div class="card-body p-4">
+-					{{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+-					<div class="mb-3">
+-						{{ form_label(form.titre) }}
+-						{{ form_widget(form.titre) }}
+-						{{ form_errors(form.titre) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.description) }}
+-						{{ form_widget(form.description) }}
+-						{{ form_errors(form.description) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.date) }}
+-						{{ form_widget(form.date) }}
+-						{{ form_errors(form.date) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.lieu) }}
+-						{{ form_widget(form.lieu) }}
+-						{{ form_errors(form.lieu) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.owner) }}
+-						{{ form_widget(form.owner) }}
+-						{{ form_errors(form.owner) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.imageFile) }}
+-						{{ form_widget(form.imageFile) }}
+-						{{ form_errors(form.imageFile) }}
+-					</div>
+-					<div class="d-flex gap-2">
+-						<button type="submit" class="btn btn-primary">
+-							<i class="fas fa-save me-2"></i>Enregistrer
+-						</button>
+-						<a href="{{ path('admin_conference_index') }}" class="btn btn-secondary">
+-							<i class="fas fa-arrow-left me-2"></i>Retour
+-						</a>
+-					</div>
++					{{ form_start(form, {action: form_action|default(''), attr: {enctype: 'multipart/form-data'}}) }}
++						{% include 'partials/_form_fields.html.twig' %}
++						<div class="d-flex gap-2 mt-4">
++							<button type="submit" class="btn btn-primary">
++								<i class="fas fa-save me-2"></i>Enregistrer
++							</button>
++							<a href="{{ path('admin_conference_index') }}" class="btn btn-secondary">
++								<i class="fas fa-arrow-left me-2"></i>Retour
++							</a>
++						</div>
+ 					{{ form_end(form) }}
+ 				</div>
+ 			</div>
+diff --git a/templates/admin/conference/index.html.twig b/templates/admin/conference/index.html.twig
+index 588b95f..3431a1c 100644
+--- a/templates/admin/conference/index.html.twig
++++ b/templates/admin/conference/index.html.twig
+@@ -7,9 +7,9 @@
+ 	<div class="d-flex justify-content-between align-items-center mb-4">
+ 		<h2>
+ 			<i class="fas fa-microphone-alt me-2"></i>Conférences</h2>
+-		<a href="{{ path('admin_conference_new') }}" class="btn btn-primary">
++		<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_conference_new') }}">
+ 			<i class="fas fa-plus me-2"></i>Nouvelle conférence
+-		</a>
++		</button>
+ 	</div>
+ 
+ 	<div class="card shadow-sm">
+@@ -33,10 +33,10 @@
+ 							<td>{{ conference.owner.prenom }}
+ 								{{ conference.owner.nom }}</td>
+ 							<td class="text-end">
+-								<a href="{{ path('admin_conference_edit', {id: conference.id}) }}" class="btn btn-sm btn-warning">
++								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_conference_edit', {id: conference.id}) }}" title="Modifier">
+ 									<i class="fas fa-edit"></i>
+-								</a>
+-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre }}')">
++								</button>
++								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
+ 									<i class="fas fa-trash"></i>
+ 								</button>
+ 								<form id="delete-form-{{ conference.id }}" action="{{ path('admin_conference_delete', {id: conference.id}) }}" method="post" class="d-none">
+@@ -53,37 +53,32 @@
+ 			</table>
+ 		</div>
+ 	</div>
++
++	{% include 'partials/_crud_modal.html.twig' %}
+ {% endblock %}
+ 
+ {% block javascripts %}
+ 	<script>
+ 		function confirmDelete(id, titre) {
+-Swal.fire({
+-title: 'Supprimer cette conférence ?',
+-text: titre,
+-icon: 'warning',
+-showCancelButton: true,
+-confirmButtonColor: '#e74c3c',
+-cancelButtonColor: '#95a5a6',
+-confirmButtonText: 'Oui, supprimer',
+-cancelButtonText: 'Annuler'
+-}).then((result) => {
+-if (result.isConfirmed) {
+-document.getElementById('delete-form-' + id).submit();
+-}
+-});
+-}
++			Swal.fire({
++				title: 'Supprimer cette conférence ?',
++				text: titre,
++				icon: 'warning',
++				showCancelButton: true,
++				confirmButtonColor: '#e74c3c',
++				cancelButtonColor: '#95a5a6',
++				confirmButtonText: 'Oui, supprimer',
++				cancelButtonText: 'Annuler'
++			}).then((result) => {
++				if (result.isConfirmed) {
++					document.getElementById('delete-form-' + id).submit();
++				}
++			});
++		}
+ 
+-$('#table-conferences').DataTable({
+-language: {
+-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+-},
+-columnDefs: [
+-{
+-orderable: false,
+-targets: -1
+-}
+-] // colonne Actions non triable
+-});
++		$('#table-conferences').DataTable({
++			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
++			columnDefs: [{orderable: false, targets: -1}]
++		});
+ 	</script>
+ {% endblock %}
+diff --git a/templates/admin/public_user/form.html.twig b/templates/admin/public_user/form.html.twig
+index f0d3341..0e75042 100644
+--- a/templates/admin/public_user/form.html.twig
++++ b/templates/admin/public_user/form.html.twig
+@@ -14,38 +14,16 @@
+ 						{{ titre }}</h4>
+ 				</div>
+ 				<div class="card-body p-4">
+-					{{ form_start(form) }}
+-					<div class="mb-3">
+-						{{ form_label(form.nom) }}
+-						{{ form_widget(form.nom) }}
+-						{{ form_errors(form.nom) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.prenom) }}
+-						{{ form_widget(form.prenom) }}
+-						{{ form_errors(form.prenom) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.phone) }}
+-						{{ form_widget(form.phone) }}
+-						{{ form_errors(form.phone) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.plainPassword) }}
+-						{{ form_widget(form.plainPassword) }}
+-						{{ form_errors(form.plainPassword) }}
+-						{% if user is not defined %}
+-							<small class="text-muted">Laisser vide pour ne pas modifier.</small>
+-						{% endif %}
+-					</div>
+-					<div class="d-flex gap-2">
+-						<button type="submit" class="btn btn-primary">
+-							<i class="fas fa-save me-2"></i>Enregistrer
+-						</button>
+-						<a href="{{ path('admin_public_user_index') }}" class="btn btn-secondary">
+-							<i class="fas fa-arrow-left me-2"></i>Retour
+-						</a>
+-					</div>
++					{{ form_start(form, {action: form_action|default(''), attr: {enctype: 'multipart/form-data'}}) }}
++						{% include 'partials/_form_fields.html.twig' %}
++						<div class="d-flex gap-2 mt-4">
++							<button type="submit" class="btn btn-primary">
++								<i class="fas fa-save me-2"></i>Enregistrer
++							</button>
++							<a href="{{ path('admin_public_user_index') }}" class="btn btn-secondary">
++								<i class="fas fa-arrow-left me-2"></i>Retour
++							</a>
++						</div>
+ 					{{ form_end(form) }}
+ 				</div>
+ 			</div>
+diff --git a/templates/admin/public_user/index.html.twig b/templates/admin/public_user/index.html.twig
+index 25f7632..df6064d 100644
+--- a/templates/admin/public_user/index.html.twig
++++ b/templates/admin/public_user/index.html.twig
+@@ -32,10 +32,10 @@
+ 							<td>{{ pu.phone }}</td>
+ 							<td>{{ pu.comments|length }}</td>
+ 							<td class="text-end">
+-								<a href="{{ path('admin_public_user_edit', {id: pu.id}) }}" class="btn btn-sm btn-warning">
++								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_public_user_edit', {id: pu.id}) }}" title="Modifier">
+ 									<i class="fas fa-edit"></i>
+-								</a>
+-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ pu.id }}, '{{ pu.prenom }} {{ pu.nom }}')">
++								</button>
++								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ pu.id }}, '{{ (pu.prenom ~ ' ' ~ pu.nom)|e('js') }}')" title="Supprimer">
+ 									<i class="fas fa-trash"></i>
+ 								</button>
+ 								<form id="delete-{{ pu.id }}" action="{{ path('admin_public_user_delete', {id: pu.id}) }}" method="post" class="d-none">
+@@ -52,37 +52,32 @@
+ 			</table>
+ 		</div>
+ 	</div>
++
++	{% include 'partials/_crud_modal.html.twig' %}
+ {% endblock %}
+ 
+ {% block javascripts %}
+ 	<script>
+ 		function confirmDelete(id, nom) {
+-Swal.fire({
+-title: 'Supprimer ce visiteur ?',
+-text: nom,
+-icon: 'warning',
+-showCancelButton: true,
+-confirmButtonColor: '#e74c3c',
+-cancelButtonColor: '#95a5a6',
+-confirmButtonText: 'Oui, supprimer',
+-cancelButtonText: 'Annuler'
+-}).then((result) => {
+-if (result.isConfirmed) {
+-document.getElementById('delete-' + id).submit();
+-}
+-});
+-}
++			Swal.fire({
++				title: 'Supprimer ce visiteur ?',
++				text: nom,
++				icon: 'warning',
++				showCancelButton: true,
++				confirmButtonColor: '#e74c3c',
++				cancelButtonColor: '#95a5a6',
++				confirmButtonText: 'Oui, supprimer',
++				cancelButtonText: 'Annuler'
++			}).then((result) => {
++				if (result.isConfirmed) {
++					document.getElementById('delete-' + id).submit();
++				}
++			});
++		}
+ 
+-$('#table-visiteurs').DataTable({
+-language: {
+-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+-},
+-columnDefs: [
+-{
+-orderable: false,
+-targets: -1
+-}
+-] // colonne Actions non triable
+-});
++		$('#table-visiteurs').DataTable({
++			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
++			columnDefs: [{orderable: false, targets: -1}]
++		});
+ 	</script>
+ {% endblock %}
+diff --git a/templates/admin/user/form.html.twig b/templates/admin/user/form.html.twig
+index 98e6be7..927d138 100644
+--- a/templates/admin/user/form.html.twig
++++ b/templates/admin/user/form.html.twig
+@@ -14,43 +14,16 @@
+ 						{{ titre }}</h4>
+ 				</div>
+ 				<div class="card-body p-4">
+-					{{ form_start(form) }}
+-					<div class="mb-3">
+-						{{ form_label(form.nom) }}
+-						{{ form_widget(form.nom) }}
+-						{{ form_errors(form.nom) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.prenom) }}
+-						{{ form_widget(form.prenom) }}
+-						{{ form_errors(form.prenom) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.email) }}
+-						{{ form_widget(form.email) }}
+-						{{ form_errors(form.email) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.roles) }}
+-						{{ form_widget(form.roles) }}
+-						{{ form_errors(form.roles) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.plainPassword) }}
+-						{{ form_widget(form.plainPassword) }}
+-						{{ form_errors(form.plainPassword) }}
+-						{% if user is not defined %}
+-							<small class="text-muted">Laisser vide pour ne pas modifier.</small>
+-						{% endif %}
+-					</div>
+-					<div class="d-flex gap-2">
+-						<button type="submit" class="btn btn-primary">
+-							<i class="fas fa-save me-2"></i>Enregistrer
+-						</button>
+-						<a href="{{ path('admin_user_index') }}" class="btn btn-secondary">
+-							<i class="fas fa-arrow-left me-2"></i>Retour
+-						</a>
+-					</div>
++					{{ form_start(form, {action: form_action|default(''), attr: {enctype: 'multipart/form-data'}}) }}
++						{% include 'partials/_form_fields.html.twig' %}
++						<div class="d-flex gap-2 mt-4">
++							<button type="submit" class="btn btn-primary">
++								<i class="fas fa-save me-2"></i>Enregistrer
++							</button>
++							<a href="{{ path('admin_user_index') }}" class="btn btn-secondary">
++								<i class="fas fa-arrow-left me-2"></i>Retour
++							</a>
++						</div>
+ 					{{ form_end(form) }}
+ 				</div>
+ 			</div>
+diff --git a/templates/admin/user/index.html.twig b/templates/admin/user/index.html.twig
+index a4d03b4..b1dc41e 100644
+--- a/templates/admin/user/index.html.twig
++++ b/templates/admin/user/index.html.twig
+@@ -11,9 +11,9 @@
+ 			<a href="{{ path('admin_public_user_index') }}" class="btn btn-success">
+ 				<i class="fas fa-user me-2"></i>Gérer les visiteurs
+ 			</a>
+-			<a href="{{ path('admin_user_new') }}" class="btn btn-primary">
++			<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_user_new') }}">
+ 				<i class="fas fa-plus me-2"></i>Nouvel utilisateur
+-			</a>
++			</button>
+ 		</div>
+ 	</div>
+ 
+@@ -45,7 +45,6 @@
+ 									{% endif %}
+ 								{% endfor %}
+ 							</td>
+-
+ 							<td>
+ 								{% if user.lastLoginAt %}
+ 									{{ user.lastLoginAt|date('d/m/Y H:i') }}
+@@ -53,12 +52,11 @@
+ 									<span class="text-muted">Jamais</span>
+ 								{% endif %}
+ 							</td>
+-
+ 							<td class="text-end">
+-								<a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-warning">
++								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_user_edit', {id: user.id}) }}" title="Modifier">
+ 									<i class="fas fa-edit"></i>
+-								</a>
+-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ user.prenom }} {{ user.nom }}')">
++								</button>
++								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ (user.prenom ~ ' ' ~ user.nom)|e('js') }}')" title="Supprimer">
+ 									<i class="fas fa-trash"></i>
+ 								</button>
+ 								<form id="delete-{{ user.id }}" action="{{ path('admin_user_delete', {id: user.id}) }}" method="post" class="d-none">
+@@ -75,37 +73,32 @@
+ 			</table>
+ 		</div>
+ 	</div>
++
++	{% include 'partials/_crud_modal.html.twig' %}
+ {% endblock %}
+ 
+ {% block javascripts %}
+ 	<script>
+ 		function confirmDelete(id, nom) {
+-Swal.fire({
+-title: 'Supprimer cet utilisateur ?',
+-text: nom,
+-icon: 'warning',
+-showCancelButton: true,
+-confirmButtonColor: '#e74c3c',
+-cancelButtonColor: '#95a5a6',
+-confirmButtonText: 'Oui, supprimer',
+-cancelButtonText: 'Annuler'
+-}).then((result) => {
+-if (result.isConfirmed) {
+-document.getElementById('delete-' + id).submit();
+-}
+-});
+-}
++			Swal.fire({
++				title: 'Supprimer cet utilisateur ?',
++				text: nom,
++				icon: 'warning',
++				showCancelButton: true,
++				confirmButtonColor: '#e74c3c',
++				cancelButtonColor: '#95a5a6',
++				confirmButtonText: 'Oui, supprimer',
++				cancelButtonText: 'Annuler'
++			}).then((result) => {
++				if (result.isConfirmed) {
++					document.getElementById('delete-' + id).submit();
++				}
++			});
++		}
+ 
+-$('#table-users').DataTable({
+-language: {
+-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+-},
+-columnDefs: [
+-{
+-orderable: false,
+-targets: -1
+-}
+-]
+-});
++		$('#table-users').DataTable({
++			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
++			columnDefs: [{orderable: false, targets: -1}]
++		});
+ 	</script>
+ {% endblock %}
+diff --git a/templates/base_admin.html.twig b/templates/base_admin.html.twig
+index d4e1e19..bc755da 100644
+--- a/templates/base_admin.html.twig
++++ b/templates/base_admin.html.twig
+@@ -166,6 +166,91 @@
+ 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 		<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+ 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
++
++		{# --- CRUD modal AJAX partagé (création / édition sans quitter la liste) --- #}
++		<script>
++			document.addEventListener('DOMContentLoaded', function () {
++				const modalEl = document.getElementById('crudModal');
++				if (!modalEl) {
++					return;
++				}
++				const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
++				const content = modalEl.querySelector('.modal-content');
++
++				async function loadForm(url) {
++					content.innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-primary" role="status"></div></div>';
++					modal.show();
++					try {
++						const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
++						content.innerHTML = await res.text();
++					} catch (e) {
++						content.innerHTML = '<div class="p-4 text-danger">Impossible de charger le formulaire.</div>';
++					}
++				}
++
++				// Ouverture (boutons "Nouveau" / "Éditer")
++				document.addEventListener('click', function (e) {
++					const trigger = e.target.closest('[data-form-url]');
++					if (!trigger) {
++						return;
++					}
++					e.preventDefault();
++					loadForm(trigger.getAttribute('data-form-url'));
++				});
++
++				// Soumission AJAX du formulaire du modal
++				content.addEventListener('submit', async function (e) {
++					const form = e.target.closest('form[data-ajax-form]');
++					if (!form) {
++						return;
++					}
++					e.preventDefault();
++					const btn = form.querySelector('[type="submit"]');
++					if (btn) {
++						btn.disabled = true;
++					}
++					try {
++						const res = await fetch(form.getAttribute('action') || window.location.href, {
++							method: 'POST',
++							body: new FormData(form),
++							headers: {'X-Requested-With': 'XMLHttpRequest'}
++						});
++						if (res.ok) {
++							let data = {};
++							try {
++								data = await res.json();
++							} catch (_) {}
++							modal.hide();
++							Swal.fire({
++								toast: true,
++								position: 'top-end',
++								icon: 'success',
++								title: data.message || 'Enregistré',
++								showConfirmButton: false,
++								timer: 2200
++							});
++							setTimeout(function () {
++								window.location.reload();
++							}, 700);
++						} else if (res.status === 422) {
++							// Erreurs de validation : on réinjecte le formulaire avec les messages
++							content.innerHTML = await res.text();
++						} else {
++							if (btn) {
++								btn.disabled = false;
++							}
++							Swal.fire({icon: 'error', title: 'Erreur', text: 'Une erreur est survenue.'});
++						}
++					} catch (err) {
++						if (btn) {
++							btn.disabled = false;
++						}
++						Swal.fire({icon: 'error', title: 'Erreur réseau', text: 'Vérifiez votre connexion.'});
++					}
++				});
++			});
++		</script>
++
+ 		{% block javascripts %}{% endblock %}
+ 	</body>
+ </html>
+diff --git a/templates/conferencier/conference/form.html.twig b/templates/conferencier/conference/form.html.twig
+index e646ff4..d6b1615 100644
+--- a/templates/conferencier/conference/form.html.twig
++++ b/templates/conferencier/conference/form.html.twig
+@@ -14,40 +14,16 @@
+ 						{{ titre }}</h4>
+ 				</div>
+ 				<div class="card-body p-4">
+-					{{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+-					<div class="mb-3">
+-						{{ form_label(form.titre) }}
+-						{{ form_widget(form.titre) }}
+-						{{ form_errors(form.titre) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.description) }}
+-						{{ form_widget(form.description) }}
+-						{{ form_errors(form.description) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.date) }}
+-						{{ form_widget(form.date) }}
+-						{{ form_errors(form.date) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.lieu) }}
+-						{{ form_widget(form.lieu) }}
+-						{{ form_errors(form.lieu) }}
+-					</div>
+-					<div class="mb-3">
+-						{{ form_label(form.imageFile) }}
+-						{{ form_widget(form.imageFile) }}
+-						{{ form_errors(form.imageFile) }}
+-					</div>
+-					<div class="d-flex gap-2">
+-						<button type="submit" class="btn btn-primary">
+-							<i class="fas fa-save me-2"></i>Enregistrer
+-						</button>
+-						<a href="{{ path('conferencier_conference_index') }}" class="btn btn-secondary">
+-							<i class="fas fa-arrow-left me-2"></i>Retour
+-						</a>
+-					</div>
++					{{ form_start(form, {action: form_action|default(''), attr: {enctype: 'multipart/form-data'}}) }}
++						{% include 'partials/_form_fields.html.twig' %}
++						<div class="d-flex gap-2 mt-4">
++							<button type="submit" class="btn btn-primary">
++								<i class="fas fa-save me-2"></i>Enregistrer
++							</button>
++							<a href="{{ path('conferencier_conference_index') }}" class="btn btn-secondary">
++								<i class="fas fa-arrow-left me-2"></i>Retour
++							</a>
++						</div>
+ 					{{ form_end(form) }}
+ 				</div>
+ 			</div>
+diff --git a/templates/conferencier/conference/index.html.twig b/templates/conferencier/conference/index.html.twig
+index 5f9b6ff..efdf6fd 100644
+--- a/templates/conferencier/conference/index.html.twig
++++ b/templates/conferencier/conference/index.html.twig
+@@ -7,9 +7,9 @@
+ 	<div class="d-flex justify-content-between align-items-center mb-4">
+ 		<h2>
+ 			<i class="fas fa-chalkboard-teacher me-2"></i>Mes conférences</h2>
+-		<a href="{{ path('conferencier_conference_new') }}" class="btn btn-primary">
++		<button type="button" class="btn btn-primary" data-form-url="{{ path('conferencier_conference_new') }}">
+ 			<i class="fas fa-plus me-2"></i>Nouvelle conférence
+-		</a>
++		</button>
+ 	</div>
+ 
+ 	<div class="card shadow-sm">
+@@ -30,10 +30,10 @@
+ 							<td>{{ conference.lieu }}</td>
+ 							<td>{{ conference.date|date('d/m/Y H:i') }}</td>
+ 							<td class="text-end">
+-								<a href="{{ path('conferencier_conference_edit', {id: conference.id}) }}" class="btn btn-sm btn-warning">
++								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('conferencier_conference_edit', {id: conference.id}) }}" title="Modifier">
+ 									<i class="fas fa-edit"></i>
+-								</a>
+-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre }}')">
++								</button>
++								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
+ 									<i class="fas fa-trash"></i>
+ 								</button>
+ 								<form id="delete-form-{{ conference.id }}" action="{{ path('conferencier_conference_delete', {id: conference.id}) }}" method="post" class="d-none">
+@@ -50,25 +50,27 @@
+ 			</table>
+ 		</div>
+ 	</div>
++
++	{% include 'partials/_crud_modal.html.twig' %}
+ {% endblock %}
+ 
+ {% block javascripts %}
+ 	<script>
+ 		function confirmDelete(id, titre) {
+-Swal.fire({
+-title: 'Supprimer cette conférence ?',
+-text: titre,
+-icon: 'warning',
+-showCancelButton: true,
+-confirmButtonColor: '#e74c3c',
+-cancelButtonColor: '#95a5a6',
+-confirmButtonText: 'Oui, supprimer',
+-cancelButtonText: 'Annuler'
+-}).then((result) => {
+-if (result.isConfirmed) {
+-document.getElementById('delete-form-' + id).submit();
+-}
+-});
+-}
++			Swal.fire({
++				title: 'Supprimer cette conférence ?',
++				text: titre,
++				icon: 'warning',
++				showCancelButton: true,
++				confirmButtonColor: '#e74c3c',
++				cancelButtonColor: '#95a5a6',
++				confirmButtonText: 'Oui, supprimer',
++				cancelButtonText: 'Annuler'
++			}).then((result) => {
++				if (result.isConfirmed) {
++					document.getElementById('delete-form-' + id).submit();
++				}
++			});
++		}
+ 	</script>
+ {% endblock %}
+diff --git a/templates/partials/_ajax_form.html.twig b/templates/partials/_ajax_form.html.twig
+new file mode 100644
+index 0000000..d3b5307
+--- /dev/null
++++ b/templates/partials/_ajax_form.html.twig
+@@ -0,0 +1,28 @@
++{# Contenu du modal renvoyé en AJAX par les contrôleurs.
++   Variables attendues : form, titre, (optionnel) icon, form_action #}
++{{ form_start(form, {
++	action: form_action|default(''),
++	attr: {
++		'data-ajax-form': '1',
++		'novalidate': 'novalidate',
++		enctype: 'multipart/form-data'
++	}
++}) }}
++	<div class="modal-header bg-primary text-white">
++		<h5 class="modal-title">
++			<i class="fas {{ icon|default('fa-pen') }} me-2"></i>{{ titre }}
++		</h5>
++		<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
++	</div>
++	<div class="modal-body">
++		{% include 'partials/_form_fields.html.twig' %}
++	</div>
++	<div class="modal-footer">
++		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
++			<i class="fas fa-times me-2"></i>Annuler
++		</button>
++		<button type="submit" class="btn btn-primary">
++			<i class="fas fa-save me-2"></i>Enregistrer
++		</button>
++	</div>
++{{ form_end(form) }}
+diff --git a/templates/partials/_crud_modal.html.twig b/templates/partials/_crud_modal.html.twig
+new file mode 100644
+index 0000000..25bd6ac
+--- /dev/null
++++ b/templates/partials/_crud_modal.html.twig
+@@ -0,0 +1,8 @@
++{# Coquille de modal réutilisable, incluse dans les pages liste (index) #}
++<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
++	<div class="modal-dialog modal-dialog-centered modal-lg">
++		<div class="modal-content">
++			{# rempli dynamiquement en AJAX #}
++		</div>
++	</div>
++</div>
+diff --git a/templates/partials/_form_fields.html.twig b/templates/partials/_form_fields.html.twig
+new file mode 100644
+index 0000000..cf03d3e
+--- /dev/null
++++ b/templates/partials/_form_fields.html.twig
+@@ -0,0 +1,9 @@
++{# Rendu générique des champs via form_row (thème bootstrap_5).
++   Utilisé à la fois par le modal AJAX et par la page complète (fallback). #}
++{{ form_errors(form) }}
++{% for child in form %}
++	{% if child.vars.name != '_token' %}
++		{{ form_row(child) }}
++	{% endif %}
++{% endfor %}
++{{ form_rest(form) }}

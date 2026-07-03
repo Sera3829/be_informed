@@ -4,13 +4,13 @@ namespace App\Controller\Admin;
 
 use App\Entity\PublicUser;
 use App\Repository\PublicUserRepository;
+use App\Service\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Service\UserManager;
 
 #[Route('/admin/visiteurs', name: 'admin_public_user_')]
 class PublicUserController extends AbstractController
@@ -26,12 +26,8 @@ class PublicUserController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'edit')]
-    public function edit(
-        PublicUser $public_user,
-        Request $request,
-        EntityManagerInterface $em,
-        UserManager $userManager
-    ): Response {
+    public function edit(PublicUser $public_user, Request $request, EntityManagerInterface $em, UserManager $userManager): Response
+    {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $form = $this->createForm(\App\Form\PublicUserFormType::class, $public_user, [
@@ -47,15 +43,30 @@ class PublicUserController extends AbstractController
                 $em->flush();
             }
 
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true, 'message' => 'Visiteur modifié avec succès.']);
+            }
             $this->addFlash('success', 'Visiteur modifié avec succès.');
             return $this->redirectToRoute('admin_public_user_index');
         }
 
-        return $this->render('admin/public_user/form.html.twig', [
+        $params = [
             'form' => $form,
             'titre' => 'Modifier le visiteur',
+            'icon' => 'fa-user-edit',
+            'form_action' => $this->generateUrl('admin_public_user_edit', ['id' => $public_user->getId()]),
             'user' => $public_user,
-        ]);
+        ];
+
+        if ($request->isXmlHttpRequest()) {
+            $response = $this->render('partials/_ajax_form.html.twig', $params);
+            if ($form->isSubmitted()) {
+                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return $response;
+        }
+
+        return $this->render('admin/public_user/form.html.twig', $params);
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]

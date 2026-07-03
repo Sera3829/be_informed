@@ -4,13 +4,13 @@ namespace App\Controller\Admin;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Service\UserManager;
 
 #[Route('/admin/users', name: 'admin_user_')]
 class UserController extends AbstractController
@@ -26,10 +26,8 @@ class UserController extends AbstractController
     }
 
     #[Route('/new', name: 'new')]
-    public function new(
-        Request $request,
-        UserManager $userManager
-    ): Response {
+    public function new(Request $request, UserManager $userManager): Response
+    {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $user = new User();
@@ -39,23 +37,19 @@ class UserController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $userManager->createUser($user, $form->get('plainPassword')->getData(), $form->get('roles')->getData());
 
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true, 'message' => 'Utilisateur créé avec succès.']);
+            }
             $this->addFlash('success', 'Utilisateur créé avec succès.');
             return $this->redirectToRoute('admin_user_index');
         }
 
-        return $this->render('admin/user/form.html.twig', [
-            'form' => $form,
-            'titre' => 'Nouvel utilisateur',
-        ]);
+        return $this->renderUserForm($request, $form, 'Nouvel utilisateur', 'fa-user-plus', $this->generateUrl('admin_user_new'));
     }
 
     #[Route('/{id}/edit', name: 'edit')]
-    public function edit(
-        User $user,
-        Request $request,
-        EntityManagerInterface $em,
-        UserManager $userManager
-    ): Response {
+    public function edit(User $user, Request $request, EntityManagerInterface $em, UserManager $userManager): Response
+    {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $form = $this->createForm(\App\Form\AdminUserFormType::class, $user, [
@@ -71,15 +65,14 @@ class UserController extends AbstractController
                 $em->flush();
             }
 
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true, 'message' => 'Utilisateur modifié avec succès.']);
+            }
             $this->addFlash('success', 'Utilisateur modifié avec succès.');
             return $this->redirectToRoute('admin_user_index');
         }
 
-        return $this->render('admin/user/form.html.twig', [
-            'form' => $form,
-            'titre' => 'Modifier l\'utilisateur',
-            'user' => $user,
-        ]);
+        return $this->renderUserForm($request, $form, "Modifier l'utilisateur", 'fa-user-edit', $this->generateUrl('admin_user_edit', ['id' => $user->getId()]), ['user' => $user]);
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
@@ -94,5 +87,25 @@ class UserController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_user_index');
+    }
+
+    private function renderUserForm(Request $request, $form, string $titre, string $icon, string $action, array $extra = []): Response
+    {
+        $params = array_merge($extra, [
+            'form' => $form,
+            'titre' => $titre,
+            'icon' => $icon,
+            'form_action' => $action,
+        ]);
+
+        if ($request->isXmlHttpRequest()) {
+            $response = $this->render('partials/_ajax_form.html.twig', $params);
+            if ($form->isSubmitted()) {
+                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return $response;
+        }
+
+        return $this->render('admin/user/form.html.twig', $params);
     }
 }
