@@ -20,15 +20,12 @@ class AdminUserFormType extends AbstractType
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('prenom', TextType::class, [
                 'label' => 'Prénom',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('roles', ChoiceType::class, [
                 'label' => 'Rôle',
@@ -44,7 +41,7 @@ class AdminUserFormType extends AbstractType
                 'label' => 'Mot de passe',
                 'mapped' => false,
                 'required' => $options['require_password'],
-                'attr' => ['class' => 'form-control'],
+                'help' => $options['require_password'] ? null : 'Laisser vide pour conserver le mot de passe actuel.',
                 'constraints' => $options['require_password'] ? [
                     new NotBlank(['message' => 'Veuillez entrer un mot de passe']),
                     new Length(['min' => 6, 'minMessage' => 'Minimum {{ limit }} caractères']),

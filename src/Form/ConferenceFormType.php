@@ -17,30 +17,30 @@ class ConferenceFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Les classes CSS (form-control / form-select / form-check-input) sont
+        // appliquées automatiquement par le thème bootstrap_5_layout.html.twig.
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
-                'attr' => ['class' => 'form-control'],
+                'attr' => ['placeholder' => 'Titre de la conférence'],
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'attr' => ['class' => 'form-control', 'rows' => 4],
+                'attr' => ['rows' => 4, 'placeholder' => 'Décrivez la conférence…'],
             ])
             ->add('date', DateTimeType::class, [
                 'label' => 'Date et heure',
                 'widget' => 'single_text',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('lieu', TextType::class, [
                 'label' => 'Lieu',
-                'attr' => ['class' => 'form-control'],
+                'attr' => ['placeholder' => 'Ex. Ouagadougou, Salle A'],
             ])
             ->add('imageFile', VichImageType::class, [
                 'label' => 'Image',
                 'required' => false,
                 'allow_delete' => true,
                 'download_uri' => false,
-                'attr' => ['class' => 'form-control'],
                 'image_uri' => true,
             ]);
 
@@ -49,7 +49,7 @@ class ConferenceFormType extends AbstractType
                 'class' => User::class,
                 'choice_label' => fn(User $u) => $u->getPrenom() . ' ' . $u->getNom(),
                 'label' => 'Conférencier',
-                'attr' => ['class' => 'form-select'],
+                'placeholder' => '— Choisir un conférencier —',
             ]);
         }
     }

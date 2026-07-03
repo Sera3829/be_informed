@@ -1,0 +1,28 @@
+{# Contenu du modal renvoyé en AJAX par les contrôleurs.
+   Variables attendues : form, titre, (optionnel) icon, form_action #}
+{{ form_start(form, {
+	action: form_action|default(''),
+	attr: {
+		'data-ajax-form': '1',
+		'novalidate': 'novalidate',
+		enctype: 'multipart/form-data'
+	}
+}) }}
+	<div class="modal-header bg-primary text-white">
+		<h5 class="modal-title">
+			<i class="fas {{ icon|default('fa-pen') }} me-2"></i>{{ titre }}
+		</h5>
+		<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+	</div>
+	<div class="modal-body">
+		{% include 'partials/_form_fields.html.twig' %}
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+			<i class="fas fa-times me-2"></i>Annuler
+		</button>
+		<button type="submit" class="btn btn-primary">
+			<i class="fas fa-save me-2"></i>Enregistrer
+		</button>
+	</div>
+{{ form_end(form) }}

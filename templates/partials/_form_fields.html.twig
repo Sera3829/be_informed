@@ -1,0 +1,9 @@
+{# Rendu générique des champs via form_row (thème bootstrap_5).
+   Utilisé à la fois par le modal AJAX et par la page complète (fallback). #}
+{{ form_errors(form) }}
+{% for child in form %}
+	{% if child.vars.name != '_token' %}
+		{{ form_row(child) }}
+	{% endif %}
+{% endfor %}
+{{ form_rest(form) }}

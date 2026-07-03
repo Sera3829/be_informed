@@ -17,21 +17,19 @@ class PublicUserFormType extends AbstractType
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('prenom', TextType::class, [
                 'label' => 'Prénom',
-                'attr' => ['class' => 'form-control'],
             ])
             ->add('phone', TextType::class, [
                 'label' => 'Téléphone',
-                'attr' => ['class' => 'form-control'],
+                'attr' => ['placeholder' => 'Ex. +226 70 00 00 00'],
             ])
             ->add('plainPassword', PasswordType::class, [
                 'label' => 'Mot de passe',
                 'mapped' => false,
                 'required' => $options['require_password'],
-                'attr' => ['class' => 'form-control'],
+                'help' => $options['require_password'] ? null : 'Laisser vide pour conserver le mot de passe actuel.',
                 'constraints' => $options['require_password'] ? [
                     new Length(['min' => 6, 'minMessage' => 'Minimum {{ limit }} caractères']),
                 ] : [],

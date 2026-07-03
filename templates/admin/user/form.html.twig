@@ -14,43 +14,16 @@
 						{{ titre }}</h4>
 				</div>
 				<div class="card-body p-4">
-					{{ form_start(form) }}
-					<div class="mb-3">
-						{{ form_label(form.nom) }}
-						{{ form_widget(form.nom) }}
-						{{ form_errors(form.nom) }}
-					</div>
-					<div class="mb-3">
-						{{ form_label(form.prenom) }}
-						{{ form_widget(form.prenom) }}
-						{{ form_errors(form.prenom) }}
-					</div>
-					<div class="mb-3">
-						{{ form_label(form.email) }}
-						{{ form_widget(form.email) }}
-						{{ form_errors(form.email) }}
-					</div>
-					<div class="mb-3">
-						{{ form_label(form.roles) }}
-						{{ form_widget(form.roles) }}
-						{{ form_errors(form.roles) }}
-					</div>
-					<div class="mb-3">
-						{{ form_label(form.plainPassword) }}
-						{{ form_widget(form.plainPassword) }}
-						{{ form_errors(form.plainPassword) }}
-						{% if user is not defined %}
-							<small class="text-muted">Laisser vide pour ne pas modifier.</small>
-						{% endif %}
-					</div>
-					<div class="d-flex gap-2">
-						<button type="submit" class="btn btn-primary">
-							<i class="fas fa-save me-2"></i>Enregistrer
-						</button>
-						<a href="{{ path('admin_user_index') }}" class="btn btn-secondary">
-							<i class="fas fa-arrow-left me-2"></i>Retour
-						</a>
-					</div>
+					{{ form_start(form, {action: form_action|default(''), attr: {enctype: 'multipart/form-data'}}) }}
+						{% include 'partials/_form_fields.html.twig' %}
+						<div class="d-flex gap-2 mt-4">
+							<button type="submit" class="btn btn-primary">
+								<i class="fas fa-save me-2"></i>Enregistrer
+							</button>
+							<a href="{{ path('admin_user_index') }}" class="btn btn-secondary">
+								<i class="fas fa-arrow-left me-2"></i>Retour
+							</a>
+						</div>
 					{{ form_end(form) }}
 				</div>
 			</div>

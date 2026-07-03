@@ -32,10 +32,10 @@
 							<td>{{ pu.phone }}</td>
 							<td>{{ pu.comments|length }}</td>
 							<td class="text-end">
-								<a href="{{ path('admin_public_user_edit', {id: pu.id}) }}" class="btn btn-sm btn-warning">
+								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_public_user_edit', {id: pu.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
-								</a>
-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ pu.id }}, '{{ pu.prenom }} {{ pu.nom }}')">
+								</button>
+								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ pu.id }}, '{{ (pu.prenom ~ ' ' ~ pu.nom)|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-{{ pu.id }}" action="{{ path('admin_public_user_delete', {id: pu.id}) }}" method="post" class="d-none">
@@ -52,37 +52,32 @@
 			</table>
 		</div>
 	</div>
+
+	{% include 'partials/_crud_modal.html.twig' %}
 {% endblock %}
 
 {% block javascripts %}
 	<script>
 		function confirmDelete(id, nom) {
-Swal.fire({
-title: 'Supprimer ce visiteur ?',
-text: nom,
-icon: 'warning',
-showCancelButton: true,
-confirmButtonColor: '#e74c3c',
-cancelButtonColor: '#95a5a6',
-confirmButtonText: 'Oui, supprimer',
-cancelButtonText: 'Annuler'
-}).then((result) => {
-if (result.isConfirmed) {
-document.getElementById('delete-' + id).submit();
-}
-});
-}
+			Swal.fire({
+				title: 'Supprimer ce visiteur ?',
+				text: nom,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#e74c3c',
+				cancelButtonColor: '#95a5a6',
+				confirmButtonText: 'Oui, supprimer',
+				cancelButtonText: 'Annuler'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					document.getElementById('delete-' + id).submit();
+				}
+			});
+		}
 
-$('#table-visiteurs').DataTable({
-language: {
-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
-},
-columnDefs: [
-{
-orderable: false,
-targets: -1
-}
-] // colonne Actions non triable
-});
+		$('#table-visiteurs').DataTable({
+			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
+			columnDefs: [{orderable: false, targets: -1}]
+		});
 	</script>
 {% endblock %}

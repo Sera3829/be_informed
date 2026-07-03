@@ -7,9 +7,9 @@
 	<div class="d-flex justify-content-between align-items-center mb-4">
 		<h2>
 			<i class="fas fa-microphone-alt me-2"></i>Conférences</h2>
-		<a href="{{ path('admin_conference_new') }}" class="btn btn-primary">
+		<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_conference_new') }}">
 			<i class="fas fa-plus me-2"></i>Nouvelle conférence
-		</a>
+		</button>
 	</div>
 
 	<div class="card shadow-sm">
@@ -33,10 +33,10 @@
 							<td>{{ conference.owner.prenom }}
 								{{ conference.owner.nom }}</td>
 							<td class="text-end">
-								<a href="{{ path('admin_conference_edit', {id: conference.id}) }}" class="btn btn-sm btn-warning">
+								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_conference_edit', {id: conference.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
-								</a>
-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre }}')">
+								</button>
+								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-form-{{ conference.id }}" action="{{ path('admin_conference_delete', {id: conference.id}) }}" method="post" class="d-none">
@@ -53,37 +53,32 @@
 			</table>
 		</div>
 	</div>
+
+	{% include 'partials/_crud_modal.html.twig' %}
 {% endblock %}
 
 {% block javascripts %}
 	<script>
 		function confirmDelete(id, titre) {
-Swal.fire({
-title: 'Supprimer cette conférence ?',
-text: titre,
-icon: 'warning',
-showCancelButton: true,
-confirmButtonColor: '#e74c3c',
-cancelButtonColor: '#95a5a6',
-confirmButtonText: 'Oui, supprimer',
-cancelButtonText: 'Annuler'
-}).then((result) => {
-if (result.isConfirmed) {
-document.getElementById('delete-form-' + id).submit();
-}
-});
-}
+			Swal.fire({
+				title: 'Supprimer cette conférence ?',
+				text: titre,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#e74c3c',
+				cancelButtonColor: '#95a5a6',
+				confirmButtonText: 'Oui, supprimer',
+				cancelButtonText: 'Annuler'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					document.getElementById('delete-form-' + id).submit();
+				}
+			});
+		}
 
-$('#table-conferences').DataTable({
-language: {
-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
-},
-columnDefs: [
-{
-orderable: false,
-targets: -1
-}
-] // colonne Actions non triable
-});
+		$('#table-conferences').DataTable({
+			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
+			columnDefs: [{orderable: false, targets: -1}]
+		});
 	</script>
 {% endblock %}

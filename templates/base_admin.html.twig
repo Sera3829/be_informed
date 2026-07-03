@@ -166,6 +166,91 @@
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 		<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+		{# --- CRUD modal AJAX partagé (création / édition sans quitter la liste) --- #}
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				const modalEl = document.getElementById('crudModal');
+				if (!modalEl) {
+					return;
+				}
+				const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+				const content = modalEl.querySelector('.modal-content');
+
+				async function loadForm(url) {
+					content.innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-primary" role="status"></div></div>';
+					modal.show();
+					try {
+						const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+						content.innerHTML = await res.text();
+					} catch (e) {
+						content.innerHTML = '<div class="p-4 text-danger">Impossible de charger le formulaire.</div>';
+					}
+				}
+
+				// Ouverture (boutons "Nouveau" / "Éditer")
+				document.addEventListener('click', function (e) {
+					const trigger = e.target.closest('[data-form-url]');
+					if (!trigger) {
+						return;
+					}
+					e.preventDefault();
+					loadForm(trigger.getAttribute('data-form-url'));
+				});
+
+				// Soumission AJAX du formulaire du modal
+				content.addEventListener('submit', async function (e) {
+					const form = e.target.closest('form[data-ajax-form]');
+					if (!form) {
+						return;
+					}
+					e.preventDefault();
+					const btn = form.querySelector('[type="submit"]');
+					if (btn) {
+						btn.disabled = true;
+					}
+					try {
+						const res = await fetch(form.getAttribute('action') || window.location.href, {
+							method: 'POST',
+							body: new FormData(form),
+							headers: {'X-Requested-With': 'XMLHttpRequest'}
+						});
+						if (res.ok) {
+							let data = {};
+							try {
+								data = await res.json();
+							} catch (_) {}
+							modal.hide();
+							Swal.fire({
+								toast: true,
+								position: 'top-end',
+								icon: 'success',
+								title: data.message || 'Enregistré',
+								showConfirmButton: false,
+								timer: 2200
+							});
+							setTimeout(function () {
+								window.location.reload();
+							}, 700);
+						} else if (res.status === 422) {
+							// Erreurs de validation : on réinjecte le formulaire avec les messages
+							content.innerHTML = await res.text();
+						} else {
+							if (btn) {
+								btn.disabled = false;
+							}
+							Swal.fire({icon: 'error', title: 'Erreur', text: 'Une erreur est survenue.'});
+						}
+					} catch (err) {
+						if (btn) {
+							btn.disabled = false;
+						}
+						Swal.fire({icon: 'error', title: 'Erreur réseau', text: 'Vérifiez votre connexion.'});
+					}
+				});
+			});
+		</script>
+
 		{% block javascripts %}{% endblock %}
 	</body>
 </html>

@@ -7,6 +7,7 @@ use App\Form\ConferenceFormType;
 use App\Repository\ConferenceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -42,14 +43,14 @@ class ConferenceController extends AbstractController
             $em->persist($conference);
             $em->flush();
 
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true, 'message' => 'Conférence créée avec succès.']);
+            }
             $this->addFlash('success', 'Conférence créée avec succès.');
             return $this->redirectToRoute('conferencier_conference_index');
         }
 
-        return $this->render('conferencier/conference/form.html.twig', [
-            'form' => $form,
-            'titre' => 'Nouvelle conférence',
-        ]);
+        return $this->renderForm($request, $form, 'Nouvelle conférence', 'fa-microphone-alt', $this->generateUrl('conferencier_conference_new'));
     }
 
     #[Route('/{id}/edit', name: 'edit')]
@@ -65,15 +66,14 @@ class ConferenceController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
 
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true, 'message' => 'Conférence modifiée avec succès.']);
+            }
             $this->addFlash('success', 'Conférence modifiée avec succès.');
             return $this->redirectToRoute('conferencier_conference_index');
         }
 
-        return $this->render('conferencier/conference/form.html.twig', [
-            'form' => $form,
-            'titre' => 'Modifier la conférence',
-            'conference' => $conference,
-        ]);
+        return $this->renderForm($request, $form, 'Modifier la conférence', 'fa-microphone-alt', $this->generateUrl('conferencier_conference_edit', ['id' => $conference->getId()]), ['conference' => $conference]);
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
@@ -88,5 +88,25 @@ class ConferenceController extends AbstractController
         }
 
         return $this->redirectToRoute('conferencier_conference_index');
+    }
+
+    private function renderForm(Request $request, $form, string $titre, string $icon, string $action, array $extra = []): Response
+    {
+        $params = array_merge($extra, [
+            'form' => $form,
+            'titre' => $titre,
+            'icon' => $icon,
+            'form_action' => $action,
+        ]);
+
+        if ($request->isXmlHttpRequest()) {
+            $response = $this->render('partials/_ajax_form.html.twig', $params);
+            if ($form->isSubmitted()) {
+                $response->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return $response;
+        }
+
+        return $this->render('conferencier/conference/form.html.twig', $params);
     }
 }

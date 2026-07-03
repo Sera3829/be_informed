@@ -11,9 +11,9 @@
 			<a href="{{ path('admin_public_user_index') }}" class="btn btn-success">
 				<i class="fas fa-user me-2"></i>Gérer les visiteurs
 			</a>
-			<a href="{{ path('admin_user_new') }}" class="btn btn-primary">
+			<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_user_new') }}">
 				<i class="fas fa-plus me-2"></i>Nouvel utilisateur
-			</a>
+			</button>
 		</div>
 	</div>
 
@@ -45,7 +45,6 @@
 									{% endif %}
 								{% endfor %}
 							</td>
-
 							<td>
 								{% if user.lastLoginAt %}
 									{{ user.lastLoginAt|date('d/m/Y H:i') }}
@@ -53,12 +52,11 @@
 									<span class="text-muted">Jamais</span>
 								{% endif %}
 							</td>
-
 							<td class="text-end">
-								<a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-warning">
+								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_user_edit', {id: user.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
-								</a>
-								<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ user.prenom }} {{ user.nom }}')">
+								</button>
+								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ (user.prenom ~ ' ' ~ user.nom)|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-{{ user.id }}" action="{{ path('admin_user_delete', {id: user.id}) }}" method="post" class="d-none">
@@ -75,37 +73,32 @@
 			</table>
 		</div>
 	</div>
+
+	{% include 'partials/_crud_modal.html.twig' %}
 {% endblock %}
 
 {% block javascripts %}
 	<script>
 		function confirmDelete(id, nom) {
-Swal.fire({
-title: 'Supprimer cet utilisateur ?',
-text: nom,
-icon: 'warning',
-showCancelButton: true,
-confirmButtonColor: '#e74c3c',
-cancelButtonColor: '#95a5a6',
-confirmButtonText: 'Oui, supprimer',
-cancelButtonText: 'Annuler'
-}).then((result) => {
-if (result.isConfirmed) {
-document.getElementById('delete-' + id).submit();
-}
-});
-}
+			Swal.fire({
+				title: 'Supprimer cet utilisateur ?',
+				text: nom,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#e74c3c',
+				cancelButtonColor: '#95a5a6',
+				confirmButtonText: 'Oui, supprimer',
+				cancelButtonText: 'Annuler'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					document.getElementById('delete-' + id).submit();
+				}
+			});
+		}
 
-$('#table-users').DataTable({
-language: {
-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
-},
-columnDefs: [
-{
-orderable: false,
-targets: -1
-}
-]
-});
+		$('#table-users').DataTable({
+			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
+			columnDefs: [{orderable: false, targets: -1}]
+		});
 	</script>
 {% endblock %}
