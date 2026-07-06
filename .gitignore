@@ -19,3 +19,4 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 /public/images/*
+be_informed_ui.patch
