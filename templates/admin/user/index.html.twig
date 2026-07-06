@@ -1,15 +1,20 @@
 {% extends 'base_admin.html.twig' %}
+{% import 'partials/_macros.html.twig' as m %}
 
 {% block title %}Gestion des utilisateurs
 {% endblock %}
 
 {% block body %}
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h2>
-			<i class="fas fa-users me-2"></i>Utilisateurs</h2>
+	<div class="d-flex justify-content-between align-items-center page-header">
+		<div>
+			<h2 class="mb-1">
+				<i class="fas fa-users me-2 text-primary"></i>Utilisateurs</h2>
+			<p class="text-muted mb-0">Admins et conférenciers ayant accès au back-office</p>
+		</div>
 		<div class="d-flex gap-2">
-			<a href="{{ path('admin_public_user_index') }}" class="btn btn-success">
-				<i class="fas fa-user me-2"></i>Gérer les visiteurs
+			{% include 'partials/_export_buttons.html.twig' with {export_type: 'users'} %}
+			<a href="{{ path('admin_public_user_index') }}" class="btn btn-outline-secondary">
+				<i class="fas fa-user me-2"></i>Visiteurs
 			</a>
 			<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_user_new') }}">
 				<i class="fas fa-plus me-2"></i>Nouvel utilisateur
@@ -19,13 +24,13 @@
 
 	<div class="card shadow-sm">
 		<div class="card-body p-0">
-			<table id="table-users" class="table table-hover mb-0">
-				<thead class="table-primary">
+			<table id="table-users" class="table table-hover table-modern">
+				<thead>
 					<tr>
-						<th>Nom</th>
-						<th>Prénom</th>
+						<th>Utilisateur</th>
 						<th>Email</th>
 						<th>Rôle</th>
+						<th>Conférences</th>
 						<th>Dernière connexion</th>
 						<th class="text-end">Actions</th>
 					</tr>
@@ -33,30 +38,43 @@
 				<tbody>
 					{% for user in users %}
 						<tr>
-							<td>{{ user.nom }}</td>
-							<td>{{ user.prenom }}</td>
+							<td>
+								<div class="avatar-group">
+									{{ m.avatar(user.prenom, user.nom) }}
+									<span class="fw-name">{{ user.prenom }} {{ user.nom }}</span>
+								</div>
+							</td>
 							<td>{{ user.email }}</td>
 							<td>
 								{% for role in user.roles %}
 									{% if role == 'ROLE_ADMIN' %}
-										<span class="badge bg-danger">Admin</span>
+										<span class="badge badge-soft-danger">Admin</span>
 									{% elseif role == 'ROLE_CONFERENCIER' %}
-										<span class="badge bg-success">Conférencier</span>
+										<span class="badge badge-soft-success">Conférencier</span>
 									{% endif %}
 								{% endfor %}
+							</td>
+							<td>
+								{% if 'ROLE_CONFERENCIER' in user.roles %}
+									<a href="{{ path('admin_conference_index', {conferencier: user.id}) }}" class="badge badge-soft-info text-decoration-none" title="Voir les conférences de {{ user.prenom }} {{ user.nom }}">
+										<i class="fas fa-microphone-alt me-1"></i>{{ user.conferences|length }}
+									</a>
+								{% else %}
+									<span class="text-muted">—</span>
+								{% endif %}
 							</td>
 							<td>
 								{% if user.lastLoginAt %}
 									{{ user.lastLoginAt|date('d/m/Y H:i') }}
 								{% else %}
-									<span class="text-muted">Jamais</span>
+									<span class="text-muted fst-italic">Jamais</span>
 								{% endif %}
 							</td>
 							<td class="text-end">
-								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_user_edit', {id: user.id}) }}" title="Modifier">
+								<button type="button" class="btn btn-action btn-outline-warning" data-form-url="{{ path('admin_user_edit', {id: user.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
 								</button>
-								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ user.id }}, '{{ (user.prenom ~ ' ' ~ user.nom)|e('js') }}')" title="Supprimer">
+								<button type="button" class="btn btn-action btn-outline-danger" onclick="confirmDelete({{ user.id }}, '{{ (user.prenom ~ ' ' ~ user.nom)|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-{{ user.id }}" action="{{ path('admin_user_delete', {id: user.id}) }}" method="post" class="d-none">
@@ -66,7 +84,12 @@
 						</tr>
 					{% else %}
 						<tr>
-							<td colspan="6" class="text-center text-muted py-4">Aucun utilisateur.</td>
+							<td colspan="6">
+								<div class="empty-state">
+									<i class="fas fa-users"></i>
+									<p>Aucun utilisateur.</p>
+								</div>
+							</td>
 						</tr>
 					{% endfor %}
 				</tbody>
@@ -96,9 +119,10 @@
 			});
 		}
 
-		$('#table-users').DataTable({
-			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
-			columnDefs: [{orderable: false, targets: -1}]
-		});
+		{% if users|length > 0 %}
+			$('#table-users').DataTable({
+				columnDefs: [{orderable: false, targets: -1}]
+			});
+		{% endif %}
 	</script>
 {% endblock %}

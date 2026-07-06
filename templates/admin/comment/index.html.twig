@@ -1,109 +1,125 @@
 {% extends 'base_admin.html.twig' %}
+{% import 'partials/_macros.html.twig' as m %}
 
 {% block title %}Gestion des commentaires
 {% endblock %}
 
 {% block body %}
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h2>
-			<i class="fas fa-comments me-2"></i>Commentaires</h2>
-		<a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
-			<i class="fas fa-arrow-left me-2"></i>Retour
-		</a>
+	<div class="d-flex justify-content-between align-items-center page-header">
+		<div>
+			<h2 class="mb-1">
+				<i class="fas fa-comments me-2 text-primary"></i>Commentaires</h2>
+			<p class="text-muted mb-0">{{ comments|length }} commentaire{{ comments|length > 1 ? 's' : '' }}
+				{%- if filtre_conference %} pour la conférence «&nbsp;{{ filtre_conference.titre }}&nbsp;»{% endif %}
+				{%- if filtre_visiteur %} de {{ filtre_visiteur.prenom }} {{ filtre_visiteur.nom }}{% endif %}
+			</p>
+		</div>
+		<div class="d-flex gap-2">
+			{% include 'partials/_export_buttons.html.twig' with {export_type: 'commentaires'} %}
+			<a href="{{ path('admin_dashboard') }}" class="btn btn-outline-secondary">
+				<i class="fas fa-arrow-left me-2"></i>Retour
+			</a>
+		</div>
 	</div>
 
-	{% for conference in conferences %}
-		{% if conference.comments|length > 0 %}
-			<div class="card shadow-sm mb-4">
-				<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-					<span>
-						<i class="fas fa-microphone-alt me-2"></i>
-						{{ conference.titre }}</span>
-					<span class="badge bg-light text-dark">{{ conference.comments|length }}
-						commentaire(s)</span>
-				</div>
-				<div class="card-body p-0">
-					<table id="table-comments-{{ conference.id }}" class="table table-hover mb-0">
-						<thead class="table-light">
-							<tr>
-								<th>Auteur</th>
-								<th>Commentaire</th>
-								<th>Date</th>
-								<th class="text-end">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for comment in conference.comments %}
-								<tr>
-									<td>
-										{% if comment.isAnonymous %}
-											<span class="text-muted">
-												<i class="fas fa-user-secret me-1"></i>Anonyme</span>
-										{% else %}
-											{{ comment.publicUser.prenom }}
-											{{ comment.publicUser.nom }}
-										{% endif %}
-									</td>
-									<td>{{ comment.texte|slice(0, 80) }}
-										{% if comment.texte|length > 80 %}...
-										{% endif %}
-									</td>
-									<td>{{ comment.createdAt|date('d/m/Y H:i') }}</td>
-									<td class="text-end">
-										<button class="btn btn-sm btn-danger" onclick="confirmDelete({{ comment.id }}, '{{ comment.texte|slice(0, 30)|e('js') }}')">
-											<i class="fas fa-trash"></i>
-										</button>
-										<form id="delete-{{ comment.id }}" action="{{ path('admin_comment_delete', {id: comment.id}) }}" method="post" class="d-none">
-											<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
-										</form>
-									</td>
-								</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		{% endif %}
-	{% else %}
-		<div class="alert alert-info">Aucune conférence.</div>
-	{% endfor %}
-
-	{% if conferences|reduce((carry, c) => carry + c.comments|length, 0) == 0 %}
-		<div class="alert alert-info">Aucun commentaire pour le moment.</div>
+	{% if filtre_conference or filtre_visiteur %}
+		<div class="mb-3">
+			{% if filtre_conference %}
+				<span class="badge badge-soft-info me-2 p-2">
+					<i class="fas fa-microphone-alt me-1"></i>{{ filtre_conference.titre }}
+				</span>
+			{% endif %}
+			{% if filtre_visiteur %}
+				<span class="badge badge-soft-info me-2 p-2">
+					<i class="fas fa-user me-1"></i>{{ filtre_visiteur.prenom }} {{ filtre_visiteur.nom }}
+				</span>
+			{% endif %}
+			<a href="{{ path('admin_comment_index') }}" class="btn btn-sm btn-outline-secondary">
+				<i class="fas fa-times me-1"></i>Retirer le filtre
+			</a>
+		</div>
 	{% endif %}
+
+	<div class="card shadow-sm">
+		<div class="card-body p-0">
+			<table id="table-comments" class="table table-hover table-modern">
+				<thead>
+					<tr>
+						<th>Conférence</th>
+						<th>Auteur</th>
+						<th>Commentaire</th>
+						<th>Date</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for comment in comments %}
+						<tr>
+							<td class="fw-semibold text-dark">
+								<i class="fas fa-microphone-alt me-1 text-muted"></i>{{ comment.conference.titre }}
+							</td>
+							<td>
+								{% if comment.isAnonymous %}
+									<span class="text-muted">
+										<i class="fas fa-user-secret me-1"></i>Anonyme</span>
+								{% else %}
+									<div class="avatar-group">
+										{{ m.avatar(comment.publicUser.prenom, comment.publicUser.nom) }}
+										<span class="fw-name">{{ comment.publicUser.prenom }} {{ comment.publicUser.nom }}</span>
+									</div>
+								{% endif %}
+							</td>
+							<td>{{ comment.texte|slice(0, 80) }}{% if comment.texte|length > 80 %}…{% endif %}</td>
+							<td class="text-nowrap" data-order="{{ comment.createdAt|date('U') }}">{{ comment.createdAt|date('d/m/Y H:i') }}</td>
+							<td class="text-end">
+								<button class="btn btn-action btn-outline-danger" onclick="confirmDelete({{ comment.id }}, '{{ comment.texte|slice(0, 30)|e('js') }}')" title="Supprimer">
+									<i class="fas fa-trash"></i>
+								</button>
+								<form id="delete-{{ comment.id }}" action="{{ path('admin_comment_delete', {id: comment.id}) }}" method="post" class="d-none">
+									<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
+								</form>
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="5">
+								<div class="empty-state">
+									<i class="fas fa-comments"></i>
+									<p>Aucun commentaire{% if filtre_conference or filtre_visiteur %} pour ce filtre{% endif %}.</p>
+								</div>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
 {% endblock %}
 
 {% block javascripts %}
 	<script>
 		function confirmDelete(id, texte) {
-Swal.fire({
-title: 'Supprimer ce commentaire ?',
-text: texte,
-icon: 'warning',
-showCancelButton: true,
-confirmButtonColor: '#e74c3c',
-cancelButtonColor: '#95a5a6',
-confirmButtonText: 'Oui, supprimer',
-cancelButtonText: 'Annuler'
-}).then((result) => {
-if (result.isConfirmed) {
-document.getElementById('delete-' + id).submit();
-}
-});
-}
+			Swal.fire({
+				title: 'Supprimer ce commentaire ?',
+				text: texte,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#e74c3c',
+				cancelButtonColor: '#95a5a6',
+				confirmButtonText: 'Oui, supprimer',
+				cancelButtonText: 'Annuler'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					document.getElementById('delete-' + id).submit();
+				}
+			});
+		}
 
-document.querySelectorAll('table[id^="table-comments-"]').forEach(table => {
-$(table).DataTable({
-language: {
-url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
-},
-columnDefs: [
-{
-orderable: false,
-targets: -1
-}
-]
-});
-});
+		{% if comments|length > 0 %}
+			$('#table-comments').DataTable({
+				order: [[3, 'desc']],
+				columnDefs: [{orderable: false, targets: -1}]
+			});
+		{% endif %}
 	</script>
 {% endblock %}

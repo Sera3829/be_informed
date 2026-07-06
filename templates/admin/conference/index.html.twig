@@ -1,42 +1,71 @@
 {% extends 'base_admin.html.twig' %}
+{% import 'partials/_macros.html.twig' as m %}
 
 {% block title %}Gestion des conférences
 {% endblock %}
 
 {% block body %}
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h2>
-			<i class="fas fa-microphone-alt me-2"></i>Conférences</h2>
-		<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_conference_new') }}">
-			<i class="fas fa-plus me-2"></i>Nouvelle conférence
-		</button>
+	<div class="d-flex justify-content-between align-items-center page-header">
+		<div>
+			<h2 class="mb-1">
+				<i class="fas fa-microphone-alt me-2 text-primary"></i>Conférences</h2>
+			<p class="text-muted mb-0">{{ conferences|length }} conférence{{ conferences|length > 1 ? 's' : '' }}
+				{%- if filtre_owner|default(null) %} de {{ filtre_owner.prenom }} {{ filtre_owner.nom }}{% else %} au total{% endif %}</p>
+		</div>
+		<div class="d-flex gap-2">
+			{% include 'partials/_export_buttons.html.twig' with {export_type: 'conferences'} %}
+			<button type="button" class="btn btn-primary" data-form-url="{{ path('admin_conference_new') }}">
+				<i class="fas fa-plus me-2"></i>Nouvelle conférence
+			</button>
+		</div>
 	</div>
+
+	{% if filtre_owner|default(null) %}
+		<div class="mb-3">
+			<span class="badge badge-soft-info me-2 p-2">
+				<i class="fas fa-user me-1"></i>{{ filtre_owner.prenom }} {{ filtre_owner.nom }}
+			</span>
+			<a href="{{ path('admin_conference_index') }}" class="btn btn-sm btn-outline-secondary">
+				<i class="fas fa-times me-1"></i>Retirer le filtre
+			</a>
+		</div>
+	{% endif %}
 
 	<div class="card shadow-sm">
 		<div class="card-body p-0">
-			<table id="table-conferences" class="table table-hover mb-0">
-				<thead class="table-primary">
+			<table id="table-conferences" class="table table-hover table-modern">
+				<thead>
 					<tr>
 						<th>Titre</th>
 						<th>Lieu</th>
 						<th>Date</th>
 						<th>Conférencier</th>
+						<th>Commentaires</th>
 						<th class="text-end">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
 					{% for conference in conferences %}
 						<tr>
-							<td>{{ conference.titre }}</td>
-							<td>{{ conference.lieu }}</td>
+							<td class="fw-semibold text-dark">{{ conference.titre }}</td>
+							<td><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ conference.lieu }}</td>
 							<td>{{ conference.date|date('d/m/Y H:i') }}</td>
-							<td>{{ conference.owner.prenom }}
-								{{ conference.owner.nom }}</td>
+							<td>
+								<div class="avatar-group">
+									{{ m.avatar(conference.owner.prenom, conference.owner.nom) }}
+									<span class="fw-name">{{ conference.owner.prenom }} {{ conference.owner.nom }}</span>
+								</div>
+							</td>
+							<td>
+								<a href="{{ path('admin_comment_index', {conference: conference.id}) }}" class="badge badge-soft-info text-decoration-none" title="Voir les commentaires de cette conférence">
+									<i class="fas fa-comments me-1"></i>{{ conference.comments|length }}
+								</a>
+							</td>
 							<td class="text-end">
-								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_conference_edit', {id: conference.id}) }}" title="Modifier">
+								<button type="button" class="btn btn-action btn-outline-warning" data-form-url="{{ path('admin_conference_edit', {id: conference.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
 								</button>
-								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
+								<button type="button" class="btn btn-action btn-outline-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-form-{{ conference.id }}" action="{{ path('admin_conference_delete', {id: conference.id}) }}" method="post" class="d-none">
@@ -46,7 +75,12 @@
 						</tr>
 					{% else %}
 						<tr>
-							<td colspan="5" class="text-center text-muted py-4">Aucune conférence pour le moment.</td>
+							<td colspan="6">
+								<div class="empty-state">
+									<i class="fas fa-microphone-alt"></i>
+									<p>Aucune conférence pour le moment.</p>
+								</div>
+							</td>
 						</tr>
 					{% endfor %}
 				</tbody>
@@ -76,9 +110,10 @@
 			});
 		}
 
-		$('#table-conferences').DataTable({
-			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
-			columnDefs: [{orderable: false, targets: -1}]
-		});
+		{% if conferences|length > 0 %}
+			$('#table-conferences').DataTable({
+				columnDefs: [{orderable: false, targets: -1}]
+			});
+		{% endif %}
 	</script>
 {% endblock %}

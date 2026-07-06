@@ -6,107 +6,140 @@
 {% block stylesheets %}
 	<style>
 		.stat-card {
-			position: relative;
-			transition: transform 0.2s;
-			cursor: pointer;
 			text-decoration: none;
 			color: inherit;
+			transition: transform .15s ease, box-shadow .15s ease;
 		}
 		.stat-card:hover {
-			transform: translateY(-4px);
+			transform: translateY(-3px);
+			box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08);
 			color: inherit;
 		}
-		.notif-badge {
-			position: absolute;
-			top: -10px;
-			right: -10px;
-			width: 36px;
-			height: 36px;
-			border-radius: 50%;
+		.stat-icon {
+			width: 3.2rem;
+			height: 3.2rem;
+			border-radius: .9rem;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			font-size: 0.85rem;
-			font-weight: bold;
-			border: 2px solid white;
-			z-index: 1;
+			font-size: 1.3rem;
+			flex-shrink: 0;
+			color: var(--stat-color);
+			background: color-mix(in srgb, var(--stat-color) 12%, #fff);
+		}
+		.stat-value {
+			font-size: 1.7rem;
+			font-weight: 700;
+			color: #29323d;
+			line-height: 1.1;
+		}
+		.stat-label {
+			font-size: .85rem;
+			color: #8a97a8;
+		}
+		.chart-card .card-header {
+			background: #fff;
+			border-bottom: 1px solid #f1f2f6;
+			padding: 1rem 1.25rem;
+		}
+		.chart-card .card-header h5 {
+			font-weight: 600;
+			color: #29323d;
+		}
+		.chart-card .card-header .text-muted {
+			font-size: .82rem;
 		}
 	</style>
 {% endblock %}
 
 {% block body %}
-	<h2 class="mb-5">
-		<i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h2>
+	<div class="page-header">
+		<h2 class="mb-1">
+			<i class="fas fa-tachometer-alt me-2 text-primary"></i>Tableau de bord</h2>
+		<p class="text-muted mb-0">Vue d'ensemble de l'activité du site</p>
+	</div>
 
 	{# Compteurs #}
-	<div class="row g-4 mb-5">
-		<div class="col-md-3">
-			<div class="position-relative">
-				<span class="notif-badge bg-primary text-white">{{ stats.conferences }}</span>
-				<a href="{{ path('admin_conference_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
-					<div class="card-body py-4">
-						<i class="fas fa-microphone-alt fa-3x text-primary mb-3"></i>
-						<h5>Conférences</h5>
+	<div class="row g-4 mb-4">
+		<div class="col-sm-6 col-xl-3">
+			<a href="{{ path('admin_conference_index') }}" class="stat-card card shadow-sm h-100">
+				<div class="card-body d-flex align-items-center gap-3">
+					<div class="stat-icon" style="--stat-color: #2a78d6">
+						<i class="fas fa-microphone-alt"></i>
 					</div>
-				</a>
-			</div>
+					<div>
+						<div class="stat-value">{{ stats.conferences }}</div>
+						<div class="stat-label">Conférences</div>
+					</div>
+					<i class="fas fa-chevron-right ms-auto text-muted small"></i>
+				</div>
+			</a>
 		</div>
-		<div class="col-md-3">
-			<div class="position-relative">
-				<span class="notif-badge bg-success text-white">{{ stats.users }}</span>
-				<a href="{{ path('admin_user_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
-					<div class="card-body py-4">
-						<i class="fas fa-users fa-3x text-success mb-3"></i>
-						<h5>Utilisateurs</h5>
+		<div class="col-sm-6 col-xl-3">
+			<a href="{{ path('admin_comment_index') }}" class="stat-card card shadow-sm h-100">
+				<div class="card-body d-flex align-items-center gap-3">
+					<div class="stat-icon" style="--stat-color: #eda100">
+						<i class="fas fa-comments"></i>
 					</div>
-				</a>
-			</div>
+					<div>
+						<div class="stat-value">{{ stats.commentaires }}</div>
+						<div class="stat-label">Commentaires</div>
+					</div>
+					<i class="fas fa-chevron-right ms-auto text-muted small"></i>
+				</div>
+			</a>
 		</div>
-		<div class="col-md-3">
-			<div class="position-relative">
-				<span class="notif-badge bg-info text-white">{{ stats.visiteurs }}</span>
-				<a href="{{ path('admin_public_user_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
-					<div class="card-body py-4">
-						<i class="fas fa-user fa-3x text-info mb-3"></i>
-						<h5>Visiteurs</h5>
+		<div class="col-sm-6 col-xl-3">
+			<a href="{{ path('admin_public_user_index') }}" class="stat-card card shadow-sm h-100">
+				<div class="card-body d-flex align-items-center gap-3">
+					<div class="stat-icon" style="--stat-color: #1baf7a">
+						<i class="fas fa-user"></i>
 					</div>
-				</a>
-			</div>
+					<div>
+						<div class="stat-value">{{ stats.visiteurs }}</div>
+						<div class="stat-label">Visiteurs</div>
+					</div>
+					<i class="fas fa-chevron-right ms-auto text-muted small"></i>
+				</div>
+			</a>
 		</div>
-		<div class="col-md-3">
-			<div class="position-relative">
-				<span class="notif-badge bg-warning text-dark">{{ stats.commentaires }}</span>
-				<a href="{{ path('admin_comment_index') }}" class="stat-card card shadow-sm text-center d-block h-100">
-					<div class="card-body py-4">
-						<i class="fas fa-comments fa-3x text-warning mb-3"></i>
-						<h5>Commentaires</h5>
+		<div class="col-sm-6 col-xl-3">
+			<a href="{{ path('admin_user_index') }}" class="stat-card card shadow-sm h-100">
+				<div class="card-body d-flex align-items-center gap-3">
+					<div class="stat-icon" style="--stat-color: #4a3aa7">
+						<i class="fas fa-users"></i>
 					</div>
-				</a>
-			</div>
+					<div>
+						<div class="stat-value">{{ stats.users }}</div>
+						<div class="stat-label">Utilisateurs</div>
+					</div>
+					<i class="fas fa-chevron-right ms-auto text-muted small"></i>
+				</div>
+			</a>
 		</div>
 	</div>
 
 	{# Graphiques #}
 	<div class="row g-4">
-		<div class="col-md-8">
-			<div class="card shadow-sm">
-				<div class="card-header bg-primary text-white">
-					<h5 class="mb-0">
-						<i class="fas fa-chart-line me-2"></i>Activité mensuelle</h5>
+		<div class="col-lg-8">
+			<div class="card shadow-sm chart-card h-100">
+				<div class="card-header">
+					<h5 class="mb-0">Activité mensuelle</h5>
+					<span class="text-muted">Créations sur les 6 derniers mois</span>
 				</div>
 				<div class="card-body">
-					<canvas id="activityChart" height="100"></canvas>
+					<canvas id="activityChart" height="110"></canvas>
 				</div>
 			</div>
 		</div>
-		<div class="col-md-4">
-			<div class="card shadow-sm">
-				<div class="card-header bg-primary text-white">
-					<h5 class="mb-0">
-						<i class="fas fa-chart-pie me-2"></i>Répartition</h5>
+		<div class="col-lg-4">
+			<div class="card shadow-sm chart-card h-100">
+				<div class="card-header">
+					<h5 class="mb-0">Totaux</h5>
+					<span class="text-muted">Volumes cumulés à ce jour</span>
 				</div>
-				<div class="card-body">
-					<canvas id="repartitionChart"></canvas>
+				<div class="card-body d-flex align-items-center">
+					<canvas id="totalsChart"></canvas>
 				</div>
 			</div>
 		</div>
@@ -116,122 +149,151 @@
 {% block javascripts %}
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script>
-		// Données depuis Symfony
-const conferencesData = {{ charts.conferences|json_encode|raw }};
-const commentairesData = {{ charts.commentaires|json_encode|raw }};
-const visiteursData = {{ charts.visiteurs|json_encode|raw }};
+		// Palette validée (CVD ΔE 47) : bleu = conférences, jaune = commentaires, vert d'eau = visiteurs
+		const COLORS = {
+			conferences: '#2a78d6',
+			commentaires: '#eda100',
+			visiteurs: '#1baf7a'
+		};
+		const TEXT_MUTED = '#8a97a8';
+		const GRID = '#f1f2f6';
 
-// Générer les 6 derniers mois comme labels
-function getLast6Months() {
-const months = [
-'Jan',
-'Fév',
-'Mar',
-'Avr',
-'Mai',
-'Jun',
-'Jul',
-'Aoû',
-'Sep',
-'Oct',
-'Nov',
-'Déc'
-];
-const result = [];
-const now = new Date();
-for (let i = 5; i >= 0; i--) {
-const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-result.push({
-label: months[d.getMonth()] + ' ' + d.getFullYear(),
-annee: d.getFullYear(),
-mois: d.getMonth() + 1
-});
-}
-return result;
-}
+		const conferencesData = {{ charts.conferences|json_encode|raw }};
+		const commentairesData = {{ charts.commentaires|json_encode|raw }};
+		const visiteursData = {{ charts.visiteurs|json_encode|raw }};
 
-function getValues(data, months) {
-return months.map(m => {
-const found = data.find(d => parseInt(d.annee) === m.annee && parseInt(d.mois) === m.mois);
-return found ? parseInt(found.total) : 0;
-});
-}
+		function getLast6Months() {
+			const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+			const result = [];
+			const now = new Date();
+			for (let i = 5; i >= 0; i--) {
+				const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+				result.push({
+					label: months[d.getMonth()] + ' ' + d.getFullYear(),
+					annee: d.getFullYear(),
+					mois: d.getMonth() + 1
+				});
+			}
+			return result;
+		}
 
-const last6 = getLast6Months();
-const labels = last6.map(m => m.label);
+		function getValues(data, months) {
+			return months.map(m => {
+				const found = data.find(d => parseInt(d.annee) === m.annee && parseInt(d.mois) === m.mois);
+				return found ? parseInt(found.total) : 0;
+			});
+		}
 
-// Graphique courbes
-new Chart(document.getElementById('activityChart'), {
-type: 'line',
-data: {
-labels: labels,
-datasets: [
-{
-label: 'Conférences',
-data: getValues(conferencesData, last6),
-borderColor: '#2c3e50',
-backgroundColor: 'rgba(44,62,80,0.1)',
-tension: 0.4,
-fill: true
-}, {
-label: 'Commentaires',
-data: getValues(commentairesData, last6),
-borderColor: '#f39c12',
-backgroundColor: 'rgba(243,156,18,0.1)',
-tension: 0.4,
-fill: true
-}, {
-label: 'Nouveaux visiteurs',
-data: getValues(visiteursData, last6),
-borderColor: '#18bc9c',
-backgroundColor: 'rgba(24,188,156,0.1)',
-tension: 0.4,
-fill: true
-}
-]
-},
-options: {
-responsive: true,
-plugins: {
-legend: {
-position: 'top'
-}
-},
-scales: {
-y: {
-beginAtZero: true,
-ticks: {
-stepSize: 1
-}
-}
-}
-}
-});
+		const last6 = getLast6Months();
 
-// Graphique camembert
-new Chart(document.getElementById('repartitionChart'), {
-type: 'doughnut',
-data: {
-labels: [
-'Conférences', 'Commentaires', 'Visiteurs'
-],
-datasets: [
-{
-data: [
-{{ stats.conferences }}, {{ stats.commentaires }}, {{ stats.visiteurs }}
-],
-backgroundColor: ['#2c3e50', '#f39c12', '#18bc9c']
-}
-]
-},
-options: {
-responsive: true,
-plugins: {
-legend: {
-position: 'bottom'
-}
-}
-}
-});
+		// Courbe d'activité : traits fins, pas d'aplat, légende en haut
+		new Chart(document.getElementById('activityChart'), {
+			type: 'line',
+			data: {
+				labels: last6.map(m => m.label),
+				datasets: [
+					{
+						label: 'Conférences',
+						data: getValues(conferencesData, last6),
+						borderColor: COLORS.conferences,
+						backgroundColor: COLORS.conferences,
+						borderWidth: 2,
+						pointRadius: 3,
+						pointHoverRadius: 5,
+						tension: .3
+					}, {
+						label: 'Commentaires',
+						data: getValues(commentairesData, last6),
+						borderColor: COLORS.commentaires,
+						backgroundColor: COLORS.commentaires,
+						borderWidth: 2,
+						pointRadius: 3,
+						pointHoverRadius: 5,
+						tension: .3
+					}, {
+						label: 'Nouveaux visiteurs',
+						data: getValues(visiteursData, last6),
+						borderColor: COLORS.visiteurs,
+						backgroundColor: COLORS.visiteurs,
+						borderWidth: 2,
+						pointRadius: 3,
+						pointHoverRadius: 5,
+						tension: .3
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				interaction: {mode: 'index', intersect: false},
+				plugins: {
+					legend: {
+						position: 'top',
+						align: 'end',
+						labels: {usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#495057'}
+					}
+				},
+				scales: {
+					x: {
+						grid: {display: false},
+						ticks: {color: TEXT_MUTED}
+					},
+					y: {
+						beginAtZero: true,
+						grid: {color: GRID},
+						border: {display: false},
+						ticks: {stepSize: 1, color: TEXT_MUTED}
+					}
+				}
+			}
+		});
+
+		// Totaux : barres horizontales, valeur affichée au bout de chaque barre
+		const totalsValues = [{{ stats.conferences }}, {{ stats.commentaires }}, {{ stats.visiteurs }}];
+		new Chart(document.getElementById('totalsChart'), {
+			type: 'bar',
+			data: {
+				labels: ['Conférences', 'Commentaires', 'Visiteurs'],
+				datasets: [{
+					data: totalsValues,
+					backgroundColor: [COLORS.conferences, COLORS.commentaires, COLORS.visiteurs],
+					borderRadius: 4,
+					barThickness: 22
+				}]
+			},
+			options: {
+				indexAxis: 'y',
+				responsive: true,
+				layout: {padding: {right: 28}},
+				plugins: {legend: {display: false}},
+				scales: {
+					x: {
+						beginAtZero: true,
+						grid: {color: GRID},
+						border: {display: false},
+						ticks: {stepSize: 1, color: TEXT_MUTED}
+					},
+					y: {
+						grid: {display: false},
+						ticks: {color: '#495057'}
+					}
+				}
+			},
+			plugins: [{
+				// Étiquettes de valeur directes (règle de lisibilité : les aplats jaune/vert
+				// d'eau sont sous 3:1 de contraste, la valeur doit donc être lisible en texte)
+				id: 'valueLabels',
+				afterDatasetsDraw(chart) {
+					const {ctx} = chart;
+					ctx.save();
+					ctx.font = '600 12px ' + getComputedStyle(document.body).fontFamily;
+					ctx.fillStyle = '#495057';
+					ctx.textBaseline = 'middle';
+					chart.getDatasetMeta(0).data.forEach((bar, i) => {
+						ctx.fillText(totalsValues[i], bar.x + 8, bar.y);
+					});
+					ctx.restore();
+				}
+			}]
+		});
 	</script>
 {% endblock %}

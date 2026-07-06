@@ -13,22 +13,306 @@
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
 		<style>
+			/* --- Habillage DataTables (barre d'outils, recherche, pagination) --- */
+			.dataTables_wrapper .dataTables_length,
+			.dataTables_wrapper .dataTables_filter {
+				padding: 1.1rem 1.25rem .9rem;
+				font-size: .875rem;
+				color: #8a97a8;
+			}
+			.dataTables_wrapper .dataTables_length select {
+				border: 1px solid #e3e7ee;
+				border-radius: .5rem;
+				padding: .4rem 1.8rem .4rem .7rem;
+				margin: 0 .4rem;
+				background-color: #fff;
+				color: #495057;
+				outline: none;
+			}
+			.dataTables_wrapper .dataTables_length select:focus {
+				border-color: #3b7ddd;
+			}
+			.dataTables_wrapper .dataTables_filter input {
+				width: 260px;
+				border: 1px solid #e3e7ee;
+				border-radius: 50rem;
+				padding: .45rem 1rem .45rem 2.3rem;
+				background: #f8f9fc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238a97a8'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat .9rem center / .85rem;
+				outline: none;
+				transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+			}
+			.dataTables_wrapper .dataTables_filter input:focus {
+				border-color: #3b7ddd;
+				background-color: #fff;
+				box-shadow: 0 0 0 .2rem rgba(59, 125, 221, .12);
+			}
+			.dataTables_wrapper .dataTables_info {
+				padding: 1rem 1.25rem 1.1rem;
+				color: #8a97a8;
+				font-size: .85rem;
+			}
+			.dataTables_wrapper .dataTables_paginate {
+				padding: .85rem 1.25rem;
+			}
 			.dataTables_wrapper .dataTables_paginate .paginate_button {
 				display: inline-block;
-				padding: 4px 10px;
+				min-width: 2.1rem;
+				text-align: center;
+				padding: .35rem .6rem;
 				margin: 0 2px;
-				border: 1px solid #dee2e6;
-				border-radius: 4px;
+				border: 1px solid #e3e7ee;
+				border-radius: .5rem;
 				cursor: pointer;
+				color: #495057 !important;
+				transition: all .12s ease;
 			}
 			.dataTables_wrapper .dataTables_paginate .paginate_button.current {
 				background: #3b7ddd;
-				color: white !important;
+				color: #fff !important;
 				border-color: #3b7ddd;
 			}
-			.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-				background: #e9ecef;
-				color: #333 !important;
+			.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+				background: #eef3fb;
+				border-color: #cfd9ea;
+				color: #3b7ddd !important;
+			}
+			.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+				opacity: .45;
+				cursor: default;
+			}
+
+			/* --- Cartes --- */
+			.card {
+				border: 1px solid rgba(0, 0, 0, .06);
+				border-radius: .75rem;
+			}
+			.card-header {
+				border-radius: .75rem .75rem 0 0 !important;
+			}
+
+			/* --- En-tête de page --- */
+			.page-header {
+				margin-bottom: 1.75rem;
+			}
+			.page-header h2 {
+				font-weight: 600;
+				letter-spacing: -.01em;
+			}
+			.page-header .text-muted {
+				font-size: .92rem;
+			}
+
+			/* --- Tableaux "modernes" --- */
+			.table-modern {
+				--row-py: .85rem;
+				margin-bottom: 0;
+			}
+			.table-modern thead th {
+				background: #f8f9fc;
+				color: #8a97a8;
+				text-transform: uppercase;
+				font-size: .72rem;
+				font-weight: 700;
+				letter-spacing: .05em;
+				border-bottom: 1px solid #eef0f4;
+				padding: .8rem 1.25rem;
+				white-space: nowrap;
+			}
+			.table-modern tbody td {
+				padding: var(--row-py) 1.25rem;
+				vertical-align: middle;
+				border-bottom: 1px solid #f1f2f6;
+				color: #495057;
+			}
+			.table-modern tbody tr:last-child td {
+				border-bottom: none;
+			}
+			.table-modern tbody tr {
+				transition: background-color .12s ease;
+			}
+			.table-modern.table-hover tbody tr:hover {
+				background-color: #f8fafd;
+			}
+
+			/* --- Avatar initiales --- */
+			.avatar-initial {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2.35rem;
+				height: 2.35rem;
+				border-radius: 50%;
+				font-size: .8rem;
+				font-weight: 700;
+				color: #fff;
+				flex-shrink: 0;
+			}
+			.avatar-group {
+				display: flex;
+				align-items: center;
+				gap: .7rem;
+			}
+			.avatar-group .fw-name {
+				font-weight: 600;
+				color: #29323d;
+			}
+			.avatar-group .text-muted {
+				font-size: .82rem;
+			}
+
+			/* --- Boutons d'action circulaires --- */
+			.btn-action {
+				width: 2.15rem;
+				height: 2.15rem;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 50%;
+				padding: 0;
+				line-height: 1;
+			}
+
+			/* --- États vides --- */
+			.empty-state {
+				padding: 3.5rem 1rem;
+				text-align: center;
+				color: #adb5bd;
+			}
+			.empty-state i {
+				font-size: 2.5rem;
+				margin-bottom: .75rem;
+				display: block;
+				opacity: .6;
+			}
+			.empty-state p {
+				margin: 0;
+				font-size: .95rem;
+			}
+
+			/* --- Badges --- */
+			.badge-soft-danger { background: #fce4e6; color: #c0392b; font-weight: 600; }
+			.badge-soft-success { background: #d9f6ee; color: #128a67; font-weight: 600; }
+			.badge-soft-info { background: #dcf1f7; color: #146c85; font-weight: 600; }
+			.badge-soft-secondary { background: #eceff3; color: #5a6473; font-weight: 600; }
+
+			/* --- Composant modal (absent du build CSS d'AdminKit) --- */
+			.modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				z-index: 1055;
+				display: none;
+				width: 100%;
+				height: 100%;
+				overflow-x: hidden;
+				overflow-y: auto;
+				outline: 0;
+			}
+			.modal-dialog {
+				position: relative;
+				width: auto;
+				margin: .5rem;
+				pointer-events: none;
+			}
+			.modal.fade .modal-dialog {
+				transform: translateY(-50px);
+				transition: transform .3s ease-out;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.modal.fade .modal-dialog { transition: none; }
+			}
+			.modal.show .modal-dialog {
+				transform: none;
+			}
+			.modal-dialog-centered {
+				display: flex;
+				align-items: center;
+				min-height: calc(100% - 1rem);
+			}
+			.modal-content {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				width: 100%;
+				pointer-events: auto;
+				background-color: #fff;
+				background-clip: padding-box;
+				border: 1px solid rgba(0, 0, 0, .2);
+				border-radius: .5rem;
+				outline: 0;
+			}
+			.modal-backdrop {
+				position: fixed;
+				top: 0;
+				left: 0;
+				z-index: 1050;
+				width: 100vw;
+				height: 100vh;
+				background-color: #000;
+			}
+			.modal-backdrop.fade { opacity: 0; }
+			.modal-backdrop.show { opacity: .5; }
+			.modal-header {
+				display: flex;
+				flex-shrink: 0;
+				align-items: center;
+				justify-content: space-between;
+				padding: 1rem;
+				border-bottom: 1px solid #dee2e6;
+				border-top-left-radius: inherit;
+				border-top-right-radius: inherit;
+			}
+			.modal-title {
+				margin-bottom: 0;
+				line-height: 1.5;
+			}
+			.modal-body {
+				position: relative;
+				flex: 1 1 auto;
+				padding: 1rem;
+			}
+			.modal-footer {
+				display: flex;
+				flex-wrap: wrap;
+				flex-shrink: 0;
+				align-items: center;
+				justify-content: flex-end;
+				gap: .5rem;
+				padding: .75rem;
+				border-top: 1px solid #dee2e6;
+				border-bottom-left-radius: inherit;
+				border-bottom-right-radius: inherit;
+			}
+			@media (min-width: 576px) {
+				.modal-dialog { max-width: 500px; margin: 1.75rem auto; }
+				.modal-dialog-centered { min-height: calc(100% - 3.5rem); }
+			}
+			@media (min-width: 992px) {
+				.modal-lg { max-width: 800px; }
+			}
+			.btn-close-white {
+				filter: invert(1) grayscale(100%) brightness(200%);
+			}
+
+			/* --- Modal CRUD --- */
+			#crudModal .modal-content {
+				border: none;
+				border-radius: .9rem;
+				overflow: hidden;
+			}
+			#crudModal .modal-header {
+				background: linear-gradient(135deg, #3b7ddd, #2f65b8);
+				border-bottom: none;
+				padding: 1.15rem 1.5rem;
+			}
+			#crudModal .modal-body {
+				padding: 1.5rem;
+				max-height: 70vh;
+				overflow-y: auto;
+			}
+			#crudModal .modal-footer {
+				border-top: 1px solid #f1f2f6;
+				padding: 1rem 1.5rem;
 			}
 		</style>
 		{% block stylesheets %}{% endblock %}
@@ -109,22 +393,43 @@
 					<div class="navbar-collapse collapse">
 						<ul class="navbar-nav navbar-align">
 							<li class="nav-item dropdown">
-								<a class="nav-icon dropdown-toggle" href="#" data-bs-toggle="dropdown">
-									<div class="d-inline-block">
-										<i class="fas fa-user-circle fa-lg text-muted"></i>
-									</div>
+								{% import 'partials/_macros.html.twig' as m %}
+								<a class="nav-link dropdown-toggle d-flex align-items-center gap-2 pe-0" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+									{{ m.avatar(app.user.prenom, app.user.nom) }}
+									<span class="d-none d-sm-inline fw-semibold text-dark">{{ app.user.prenom }}</span>
 								</a>
-								<div class="dropdown-menu dropdown-menu-end">
-									<div class="dropdown-menu-header">
-										<div class="text-muted">
-											{{ app.user.prenom }}
-											{{ app.user.nom }}
+								<div class="dropdown-menu dropdown-menu-end shadow border-0 p-0 overflow-hidden" style="min-width: 250px">
+									<div class="d-flex align-items-center gap-2 px-3 py-3" style="background: #f8f9fc">
+										{{ m.avatar(app.user.prenom, app.user.nom) }}
+										<div class="lh-sm">
+											<div class="fw-semibold text-dark">{{ app.user.prenom }} {{ app.user.nom }}</div>
+											<div class="text-muted small">{{ app.user.email }}</div>
+											{% if is_granted('ROLE_ADMIN') %}
+												<span class="badge badge-soft-danger mt-1">Administrateur</span>
+											{% elseif is_granted('ROLE_CONFERENCIER') %}
+												<span class="badge badge-soft-success mt-1">Conférencier</span>
+											{% endif %}
 										</div>
 									</div>
-									<div class="dropdown-divider"></div>
-									<a class="dropdown-item text-danger" href="{{ path('app_logout') }}">
-										<i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-									</a>
+									<div class="border-top">
+										{% if is_granted('ROLE_ADMIN') %}
+											<a class="dropdown-item py-2" href="{{ path('admin_dashboard') }}">
+												<i class="fas fa-tachometer-alt me-2 text-muted"></i>Tableau de bord
+											</a>
+										{% elseif is_granted('ROLE_CONFERENCIER') %}
+											<a class="dropdown-item py-2" href="{{ path('conferencier_dashboard') }}">
+												<i class="fas fa-chalkboard-teacher me-2 text-muted"></i>Mon espace
+											</a>
+										{% endif %}
+										<a class="dropdown-item py-2" href="{{ path('app_home') }}">
+											<i class="fas fa-globe me-2 text-muted"></i>Voir le site
+										</a>
+									</div>
+									<div class="border-top">
+										<a class="dropdown-item py-2 text-danger" href="{{ path('app_logout') }}">
+											<i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+										</a>
+									</div>
 								</div>
 							</li>
 						</ul>
@@ -133,15 +438,6 @@
 
 				<main class="content">
 					<div class="container-fluid p-0">
-						{% for type, messages in app.flashes %}
-							{% for message in messages %}
-								<div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
-									{{ message }}
-									<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-								</div>
-							{% endfor %}
-						{% endfor %}
-
 						{% block body %}{% endblock %}
 					</div>
 				</main>
@@ -167,6 +463,48 @@
 		<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
+		{# --- Messages flash affichés en toast (même style que les actions AJAX) --- #}
+		{% set flashes = app.flashes %}
+		{% if flashes|length > 0 %}
+			<script>
+				document.addEventListener('DOMContentLoaded', function () {
+					const flashes = {{ flashes|json_encode|raw }};
+					const icons = {success: 'success', danger: 'error', error: 'error', warning: 'warning', info: 'info'};
+					for (const [type, messages] of Object.entries(flashes)) {
+						for (const message of messages) {
+							Swal.fire({
+								toast: true,
+								position: 'top-end',
+								icon: icons[type] || 'info',
+								title: message,
+								showConfirmButton: false,
+								timer: 3000
+							});
+						}
+					}
+				});
+			</script>
+		{% endif %}
+
+		{# --- Réglages par défaut des DataTables (libellés français épurés) --- #}
+		<script>
+			if (window.jQuery && $.fn.dataTable) {
+				$.extend(true, $.fn.dataTable.defaults, {
+					language: {
+						lengthMenu: '_MENU_ lignes par page',
+						search: '',
+						searchPlaceholder: 'Rechercher…',
+						info: '_START_–_END_ sur _TOTAL_ entrées',
+						infoEmpty: 'Aucune entrée',
+						infoFiltered: '(filtrées parmi _MAX_)',
+						zeroRecords: 'Aucun résultat trouvé',
+						emptyTable: 'Aucune donnée disponible',
+						paginate: {first: '«', previous: '‹', next: '›', last: '»'}
+					}
+				});
+			}
+		</script>
+
 		{# --- CRUD modal AJAX partagé (création / édition sans quitter la liste) --- #}
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {
@@ -174,6 +512,9 @@
 				if (!modalEl) {
 					return;
 				}
+				// Sorti du flux de la page : un modal doit être enfant direct de <body>
+				// pour que position:fixed ne soit perturbé par aucun conteneur parent.
+				document.body.appendChild(modalEl);
 				const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 				const content = modalEl.querySelector('.modal-content');
 

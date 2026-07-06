@@ -1,24 +1,30 @@
 {% extends 'base_admin.html.twig' %}
+{% import 'partials/_macros.html.twig' as m %}
 
 {% block title %}Gestion des visiteurs
 {% endblock %}
 
 {% block body %}
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h2>
-			<i class="fas fa-user me-2"></i>Visiteurs</h2>
-		<a href="{{ path('admin_user_index') }}" class="btn btn-secondary">
-			<i class="fas fa-arrow-left me-2"></i>Retour utilisateurs
-		</a>
+	<div class="d-flex justify-content-between align-items-center page-header">
+		<div>
+			<h2 class="mb-1">
+				<i class="fas fa-user me-2 text-primary"></i>Visiteurs</h2>
+			<p class="text-muted mb-0">{{ public_users|length }} visiteur{{ public_users|length > 1 ? 's' : '' }} inscrit{{ public_users|length > 1 ? 's' : '' }}</p>
+		</div>
+		<div class="d-flex gap-2">
+			{% include 'partials/_export_buttons.html.twig' with {export_type: 'visiteurs'} %}
+			<a href="{{ path('admin_user_index') }}" class="btn btn-outline-secondary">
+				<i class="fas fa-arrow-left me-2"></i>Retour utilisateurs
+			</a>
+		</div>
 	</div>
 
 	<div class="card shadow-sm">
 		<div class="card-body p-0">
-			<table id="table-visiteurs" class="table table-hover mb-0">
-				<thead class="table-success">
+			<table id="table-visiteurs" class="table table-hover table-modern">
+				<thead>
 					<tr>
-						<th>Nom</th>
-						<th>Prénom</th>
+						<th>Visiteur</th>
 						<th>Téléphone</th>
 						<th>Commentaires</th>
 						<th class="text-end">Actions</th>
@@ -27,15 +33,23 @@
 				<tbody>
 					{% for pu in public_users %}
 						<tr>
-							<td>{{ pu.nom }}</td>
-							<td>{{ pu.prenom }}</td>
+							<td>
+								<div class="avatar-group">
+									{{ m.avatar(pu.prenom, pu.nom) }}
+									<span class="fw-name">{{ pu.prenom }} {{ pu.nom }}</span>
+								</div>
+							</td>
 							<td>{{ pu.phone }}</td>
-							<td>{{ pu.comments|length }}</td>
+							<td>
+								<a href="{{ path('admin_comment_index', {visiteur: pu.id}) }}" class="badge badge-soft-info text-decoration-none" title="Voir les commentaires de {{ pu.prenom }} {{ pu.nom }}">
+									<i class="fas fa-comments me-1"></i>{{ pu.comments|length }}
+								</a>
+							</td>
 							<td class="text-end">
-								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('admin_public_user_edit', {id: pu.id}) }}" title="Modifier">
+								<button type="button" class="btn btn-action btn-outline-warning" data-form-url="{{ path('admin_public_user_edit', {id: pu.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
 								</button>
-								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ pu.id }}, '{{ (pu.prenom ~ ' ' ~ pu.nom)|e('js') }}')" title="Supprimer">
+								<button type="button" class="btn btn-action btn-outline-danger" onclick="confirmDelete({{ pu.id }}, '{{ (pu.prenom ~ ' ' ~ pu.nom)|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-{{ pu.id }}" action="{{ path('admin_public_user_delete', {id: pu.id}) }}" method="post" class="d-none">
@@ -45,7 +59,12 @@
 						</tr>
 					{% else %}
 						<tr>
-							<td colspan="5" class="text-center text-muted py-4">Aucun visiteur.</td>
+							<td colspan="4">
+								<div class="empty-state">
+									<i class="fas fa-user"></i>
+									<p>Aucun visiteur.</p>
+								</div>
+							</td>
 						</tr>
 					{% endfor %}
 				</tbody>
@@ -75,9 +94,10 @@
 			});
 		}
 
-		$('#table-visiteurs').DataTable({
-			language: {url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'},
-			columnDefs: [{orderable: false, targets: -1}]
-		});
+		{% if public_users|length > 0 %}
+			$('#table-visiteurs').DataTable({
+				columnDefs: [{orderable: false, targets: -1}]
+			});
+		{% endif %}
 	</script>
 {% endblock %}

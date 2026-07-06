@@ -4,9 +4,12 @@
 {% endblock %}
 
 {% block body %}
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h2>
-			<i class="fas fa-chalkboard-teacher me-2"></i>Mes conférences</h2>
+	<div class="d-flex justify-content-between align-items-center page-header">
+		<div>
+			<h2 class="mb-1">
+				<i class="fas fa-chalkboard-teacher me-2 text-primary"></i>Mes conférences</h2>
+			<p class="text-muted mb-0">{{ conferences|length }} conférence{{ conferences|length > 1 ? 's' : '' }}</p>
+		</div>
 		<button type="button" class="btn btn-primary" data-form-url="{{ path('conferencier_conference_new') }}">
 			<i class="fas fa-plus me-2"></i>Nouvelle conférence
 		</button>
@@ -14,8 +17,8 @@
 
 	<div class="card shadow-sm">
 		<div class="card-body p-0">
-			<table class="table table-hover mb-0">
-				<thead class="table-primary">
+			<table class="table table-hover table-modern">
+				<thead>
 					<tr>
 						<th>Titre</th>
 						<th>Lieu</th>
@@ -26,14 +29,14 @@
 				<tbody>
 					{% for conference in conferences %}
 						<tr>
-							<td>{{ conference.titre }}</td>
-							<td>{{ conference.lieu }}</td>
+							<td class="fw-semibold text-dark">{{ conference.titre }}</td>
+							<td><i class="fas fa-map-marker-alt me-1 text-muted"></i>{{ conference.lieu }}</td>
 							<td>{{ conference.date|date('d/m/Y H:i') }}</td>
 							<td class="text-end">
-								<button type="button" class="btn btn-sm btn-warning" data-form-url="{{ path('conferencier_conference_edit', {id: conference.id}) }}" title="Modifier">
+								<button type="button" class="btn btn-action btn-outline-warning" data-form-url="{{ path('conferencier_conference_edit', {id: conference.id}) }}" title="Modifier">
 									<i class="fas fa-edit"></i>
 								</button>
-								<button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
+								<button type="button" class="btn btn-action btn-outline-danger" onclick="confirmDelete({{ conference.id }}, '{{ conference.titre|e('js') }}')" title="Supprimer">
 									<i class="fas fa-trash"></i>
 								</button>
 								<form id="delete-form-{{ conference.id }}" action="{{ path('conferencier_conference_delete', {id: conference.id}) }}" method="post" class="d-none">
@@ -43,7 +46,12 @@
 						</tr>
 					{% else %}
 						<tr>
-							<td colspan="4" class="text-center text-muted py-4">Vous n'avez pas encore de conférences.</td>
+							<td colspan="4">
+								<div class="empty-state">
+									<i class="fas fa-chalkboard-teacher"></i>
+									<p>Vous n'avez pas encore de conférences.</p>
+								</div>
+							</td>
 						</tr>
 					{% endfor %}
 				</tbody>

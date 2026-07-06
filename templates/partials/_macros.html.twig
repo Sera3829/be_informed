@@ -1,0 +1,8 @@
+{# Avatar rond avec initiales, couleur déterministe basée sur le nom #}
+{% macro avatar(prenom, nom) %}
+	{% set colors = ['#3b7ddd', '#1cbb8c', '#fcb92c', '#6f42c1', '#e83e8c', '#17a2b8', '#fd7e14', '#20c997'] %}
+	{% set full = (prenom ~ nom)|trim %}
+	{% set index = full is not empty ? (full|length % colors|length) : 0 %}
+	{% set initials = (prenom|first|upper|default('')) ~ (nom|first|upper|default('')) %}
+	<span class="avatar-initial" style="background-color: {{ colors[index] }}">{{ initials|default('?') }}</span>
+{% endmacro %}
