@@ -16,12 +16,15 @@ use Symfony\Component\Routing\Attribute\Route;
 class ConferenceController extends AbstractController
 {
     #[Route('/', name: 'index')]
-    public function index(ConferenceRepository $repo): Response
+    public function index(Request $request, ConferenceRepository $repo, \App\Repository\UserRepository $userRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
+        $owner = $request->query->getInt('conferencier') ? $userRepo->find($request->query->getInt('conferencier')) : null;
+
         return $this->render('admin/conference/index.html.twig', [
-            'conferences' => $repo->findAll(),
+            'conferences' => $owner ? $repo->findBy(['owner' => $owner]) : $repo->findAll(),
+            'filtre_owner' => $owner,
         ]);
     }
 
@@ -76,9 +79,13 @@ class ConferenceController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($this->isCsrfTokenValid('delete' . $conference->getId(), $request->request->get('_token'))) {
-            $em->remove($conference);
-            $em->flush();
-            $this->addFlash('success', 'Conférence supprimée.');
+            try {
+                $em->remove($conference);
+                $em->flush();
+                $this->addFlash('success', 'Conférence supprimée avec succès.');
+            } catch (\Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException) {
+                $this->addFlash('danger', 'Impossible de supprimer cette conférence : des données y sont encore rattachées.');
+            }
         }
 
         return $this->redirectToRoute('admin_conference_index');

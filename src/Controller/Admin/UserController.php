@@ -81,9 +81,18 @@ class UserController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($this->isCsrfTokenValid('delete' . $user->getId(), $request->request->get('_token'))) {
-            $em->remove($user);
-            $em->flush();
-            $this->addFlash('success', 'Utilisateur supprimé.');
+            if ($user === $this->getUser()) {
+                $this->addFlash('danger', 'Vous ne pouvez pas supprimer votre propre compte.');
+                return $this->redirectToRoute('admin_user_index');
+            }
+
+            try {
+                $em->remove($user);
+                $em->flush();
+                $this->addFlash('success', 'Utilisateur supprimé avec succès.');
+            } catch (\Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException) {
+                $this->addFlash('danger', 'Impossible de supprimer cet utilisateur : des données y sont encore rattachées.');
+            }
         }
 
         return $this->redirectToRoute('admin_user_index');

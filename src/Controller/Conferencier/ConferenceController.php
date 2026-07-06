@@ -82,9 +82,13 @@ class ConferenceController extends AbstractController
         $this->denyAccessUnlessGranted('delete', $conference);
 
         if ($this->isCsrfTokenValid('delete' . $conference->getId(), $request->request->get('_token'))) {
-            $em->remove($conference);
-            $em->flush();
-            $this->addFlash('success', 'Conférence supprimée.');
+            try {
+                $em->remove($conference);
+                $em->flush();
+                $this->addFlash('success', 'Conférence supprimée avec succès.');
+            } catch (\Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException) {
+                $this->addFlash('danger', 'Impossible de supprimer cette conférence : des données y sont encore rattachées.');
+            }
         }
 
         return $this->redirectToRoute('conferencier_conference_index');
