@@ -1,0 +1,19 @@
+{# Menu d'export PDF / Excel. Variable attendue : export_type
+   (conferences | users | visiteurs | commentaires) #}
+<div class="dropdown d-inline-block">
+	<button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+		<i class="fas fa-download me-2"></i>Exporter
+	</button>
+	<ul class="dropdown-menu dropdown-menu-end shadow border-0">
+		<li>
+			<a class="dropdown-item py-2" href="{{ path('admin_export_download', {type: export_type, format: 'pdf'}) }}">
+				<i class="fas fa-file-pdf me-2 text-danger"></i>PDF
+			</a>
+		</li>
+		<li>
+			<a class="dropdown-item py-2" href="{{ path('admin_export_download', {type: export_type, format: 'xlsx'}) }}">
+				<i class="fas fa-file-excel me-2 text-success"></i>Excel
+			</a>
+		</li>
+	</ul>
+</div>

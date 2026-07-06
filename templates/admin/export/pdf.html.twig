@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<style>
+		body {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-size: 11px;
+			color: #333;
+			margin: 24px;
+		}
+		h1 {
+			font-size: 17px;
+			color: #2c3e50;
+			border-bottom: 2px solid #3b7ddd;
+			padding-bottom: 8px;
+			margin-bottom: 4px;
+		}
+		.meta {
+			color: #888;
+			font-size: 10px;
+			margin-bottom: 16px;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		thead th {
+			background: #3b7ddd;
+			color: #fff;
+			text-align: left;
+			padding: 6px 8px;
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: .04em;
+		}
+		tbody td {
+			padding: 5px 8px;
+			border-bottom: 1px solid #e5e8ee;
+			vertical-align: top;
+		}
+		tbody tr:nth-child(even) td {
+			background: #f7f9fc;
+		}
+	</style>
+</head>
+<body>
+	<h1>Be Informed — {{ titre }}</h1>
+	<p class="meta">Exporté le {{ 'now'|date('d/m/Y à H:i') }} — {{ rows|length }} ligne{{ rows|length > 1 ? 's' : '' }}</p>
+	<table>
+		<thead>
+			<tr>
+				{% for header in headers %}
+					<th>{{ header }}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+				<tr>
+					{% for cell in row %}
+						<td>{{ cell }}</td>
+					{% endfor %}
+				</tr>
+			{% else %}
+				<tr>
+					<td colspan="{{ headers|length }}">Aucune donnée.</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</body>
+</html>

@@ -73,6 +73,9 @@
             "config/routes/easyadmin.yaml"
         ]
     },
+    "knplabs/knp-snappy-bundle": {
+        "version": "v1.10.6"
+    },
     "nelmio/cors-bundle": {
         "version": "2.6",
         "recipe": {
