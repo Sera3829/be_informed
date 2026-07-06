@@ -32,7 +32,7 @@ class PublicUser implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Comment>
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'publicUser')]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'publicUser', cascade: ['remove'])]
     private Collection $comments;
 
     #[ORM\Column]

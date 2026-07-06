@@ -70,7 +70,7 @@ class Conference
     /**
      * @var Collection<int, Comment>
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'conference')]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'conference', cascade: ['remove'])]
     private Collection $comments;
 
     public function __construct()

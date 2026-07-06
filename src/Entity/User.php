@@ -42,7 +42,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Conference>
      */
-    #[ORM\OneToMany(targetEntity: Conference::class, mappedBy: 'owner')]
+    #[ORM\OneToMany(targetEntity: Conference::class, mappedBy: 'owner', cascade: ['remove'])]
     private Collection $conferences;
 
     #[ORM\Column(nullable: true)]
